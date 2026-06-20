@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Career Roadmap - Learnix{% endblock %}
+{% block content %}
+<div class="page-header animate-fade-in">
+    <h1><i class="fas fa-route"></i> AI Career Guidance</h1>
+    <p>Get personalized skill roadmaps, recommended courses, and learning paths for your dream career.</p>
+</div>
+
+<div class="grid-cards" style="margin-bottom: 2rem;">
+    {% for key, path in career_paths.items() %}
+    <div class="card g4 feature-card-hover career-path-card" data-path="{{ key }}" style="cursor: pointer;">
+        <div class="card-top">
+            <div>
+                <div class="title">{{ path.name }}</div>
+                <div class="desc">Skill roadmap &bull; Courses &bull; Learning path</div>
+            </div>
+            <div class="icon"><i class="fas {{ path.icon }}"></i></div>
+        </div>
+        <div class="glass-overlay"></div>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="roadmapArea" class="card glass-card" style="padding: 2rem; {% if not active_data %}display: none;{% endif %}">
+    {% if active %}
+    <h3>Your Roadmap: {{ career_paths[active.career_path].name if active.career_path in career_paths else active.career_path }}</h3>
+    {% endif %}
+    <div id="roadmapContent">
+        {% if active_data %}
+        <div class="roadmap-phases" style="display: grid; gap: 1rem; margin-top: 1.5rem;">
+            {% for phase in active_data.phases %}
+            <div class="roadmap-phase" style="padding: 1rem; border: 1px solid var(--card-border); border-radius: 12px; border-left: 4px solid var(--primary);">
+                <strong>{{ phase.name }}</strong> <span style="color: var(--text-muted);">({{ phase.duration }})</span>
+                <div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                    {% for skill in phase.skills %}<span class="badge-info">{{ skill }}</span>{% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% if active_courses %}
+        <h4 style="margin-top: 2rem;">Recommended Courses</h4>
+        <div style="display: grid; gap: 0.75rem; margin-top: 1rem;">
+            {% for c in active_courses %}
+            <div style="padding: 0.75rem; background: rgba(6,182,212,0.08); border-radius: 8px;">
+                <strong>{{ c.name }}</strong> &mdash; {{ c.platform }} ({{ c.duration }})
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.career-path-card').forEach(card => {
+    card.addEventListener('click', async () => {
+        const path = card.dataset.path;
+        document.getElementById('roadmapArea').style.display = 'block';
+        document.getElementById('roadmapContent').innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Generating your personalized roadmap...</p>';
+        const res = await fetch('/api/career/roadmap/generate', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({career_path: path})
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            const rm = data.roadmap;
+            document.getElementById('roadmapContent').innerHTML = `
+                <div class="roadmap-phases" style="display: grid; gap: 1rem;">
+                    ${(rm.phases || []).map(p => `
+                        <div style="padding: 1rem; border: 1px solid var(--card-border); border-radius: 12px; border-left: 4px solid var(--primary);">
+                            <strong>${p.name}</strong> <span style="color: var(--text-muted);">(${p.duration})</span>
+                            <div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                                ${(p.skills || []).map(s => `<span class="badge-info">${s}</span>`).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <h4 style="margin-top: 2rem;">Recommended Courses</h4>
+                <div style="display: grid; gap: 0.75rem; margin-top: 1rem;">
+                    ${(rm.courses || []).map(c => `
+                        <div style="padding: 0.75rem; background: rgba(6,182,212,0.08); border-radius: 8px;">
+                            <strong>${c.name}</strong> &mdash; ${c.platform} (${c.duration})
+                        </div>
+                    `).join('')}
+                </div>`;
+        }
+    });
+});
+</script>
+{% endblock %}

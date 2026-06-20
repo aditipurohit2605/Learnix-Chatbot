@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Coding Practice - Learnix{% endblock %}
+{% block content %}
+<div class="page-header animate-fade-in">
+    <h1><i class="fas fa-code"></i> DSA Preparation</h1>
+    <p>Master data structures and algorithms with AI explanations, practice questions, and a topic roadmap.</p>
+</div>
+
+<div class="roadmap-bar glass-card" style="padding: 1.5rem; margin-bottom: 2rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+    <span style="font-weight: 600; margin-right: 0.5rem;">Topic Roadmap:</span>
+    {% for key, topic in topics.items() %}
+    <a href="{{ url_for('student.coding_topic', topic_key=key) }}" class="roadmap-chip {% if topic_stats.get(key) %}roadmap-done{% endif %}">
+        <i class="fas {{ topic.icon }}"></i> {{ topic.name }}
+    </a>
+    {% endfor %}
+</div>
+
+<div class="grid-cards">
+    {% for key, topic in topics.items() %}
+    <a class="card g2 feature-card-hover" href="{{ url_for('student.coding_topic', topic_key=key) }}">
+        <div class="card-top">
+            <div>
+                <div class="title">{{ topic.name }}</div>
+                <div class="desc">AI explanations &bull; Practice questions</div>
+                {% if topic_stats.get(key) %}
+                <div class="progress-badge">{{ topic_stats[key].problems_solved }} solved &bull; {{ topic_stats[key].score_avg }}%</div>
+                {% else %}
+                <div class="progress-badge">Not started</div>
+                {% endif %}
+            </div>
+            <div class="icon"><i class="fas {{ topic.icon }}"></i></div>
+        </div>
+        <div class="glass-overlay"></div>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

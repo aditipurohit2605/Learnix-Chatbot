@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - Learnix{% endblock %}
+{% block body_class %}class="auth-page"{% endblock %}
+{% block content %}
+<div class="auth-container">
+    
+    <!-- Learnix Branding -->
+    <div class="auth-logo-header">
+        <a href="/" class="auth-logo">
+            <i class="fas fa-brain"></i> Learnix
+        </a>
+        <p class="auth-tagline">"Learn Smarter with AI"</p>
+    </div>
+
+    <!-- Login/Reset Glass Card -->
+    <div class="card glass-card auth-card">
+        
+        {% if forgot_mode %}
+            <!-- Forgot Password View -->
+            <div class="auth-header">
+                <h2>Recover Password</h2>
+                <p>Provide your email address below to receive password recovery details.</p>
+            </div>
+            
+            <form action="{{ url_for('auth.forgot_password') }}" method="POST" class="auth-form">
+                <div class="form-group">
+                    <label for="recoveryEmail" class="form-label">Email Address</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" name="email" id="recoveryEmail" class="form-control" placeholder="name@domain.com" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1.5rem;">
+                    Send Recovery Email <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                <a href="{{ url_for('auth.login') }}" class="auth-link">
+                    <i class="fas fa-chevron-left" style="margin-right: 0.5rem;"></i> Back to Login
+                </a>
+            </div>
+            
+        {% else %}
+            <!-- Standard Login View -->
+            <div class="auth-header">
+                <h2>Welcome Back</h2>
+                <p>Log in to access your dashboard, chats, and custom quizzes.</p>
+            </div>
+            
+            <form action="{{ url_for('auth.login') }}" method="POST" class="auth-form">
+                <div class="form-group">
+                    <label for="loginUsername" class="form-label">Username</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" name="username" id="loginUsername" class="form-control" placeholder="Enter username" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword" class="form-label">Password</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" name="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+                    </div>
+                </div>
+                
+                <div class="form-actions-row">
+                    <label class="checkbox-container">
+                        <input type="checkbox" name="remember">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="{{ url_for('auth.forgot_password') }}" class="auth-link">Forgot Password?</a>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    Log In <i class="fas fa-sign-in-alt icon-end"></i>
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                <p>
+                    Don't have an account? 
+                    <a href="{{ url_for('auth.register') }}" class="auth-link">Sign Up</a>
+                </p>
+            </div>
+        {% endif %}
+        
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% macro user_avatar(user, size='md', css_class='') %}
+{% set sizes = {'sm': '32px', 'md': '44px', 'lg': '100px', 'xl': '120px'} %}
+{% set dim = sizes.get(size, '44px') %}
+{% if user.avatar and user.avatar != 'default_avatar.png' %}
+    <img src="{{ url_for('static', filename='uploads/avatars/' + user.avatar) }}"
+         alt="{{ user.username }}"
+         class="user-avatar-img {{ css_class }}"
+         style="width: {{ dim }}; height: {{ dim }}; border-radius: 50%; object-fit: cover; display: block;">
+{% else %}
+    <div class="avatar-initials {{ css_class }}"
+         style="width: {{ dim }}; height: {{ dim }}; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6366F1, #8B5CF6); color: #fff; font-weight: 700; font-size: calc({{ dim }} * 0.38); letter-spacing: 0.02em; flex-shrink: 0;">
+        {{ user.username[:2] | upper }}
+    </div>
+{% endif %}
+{% endmacro %}

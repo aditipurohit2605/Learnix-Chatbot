@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ company.name }} Preparation - Learnix{% endblock %}
+{% block content %}
+<div class="page-header animate-fade-in">
+    <a href="{{ url_for('student.company_prep') }}" class="back-link"><i class="fas fa-arrow-left"></i> All Companies</a>
+    <h1><i class="fas fa-building"></i> {{ company.name }}</h1>
+    <p>{{ company.pattern }}</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <div class="card glass-card" style="padding: 1.5rem;">
+        <h3><i class="fas fa-crosshairs"></i> Company Pattern & Focus Areas</h3>
+        <p style="margin: 1rem 0; color: var(--text-muted);"><strong>Pattern:</strong> {{ company.pattern }}</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {% for f in company.focus %}<span class="badge-info">{{ f }}</span>{% endfor %}
+        </div>
+        <a href="{{ url_for('student.placement_hub') }}" class="btn btn-primary" style="margin-top: 1.5rem;"><i class="fas fa-play"></i> Practice Aptitude Set</a>
+    </div>
+    <div class="card glass-card" style="padding: 1.5rem;">
+        <h3><i class="fas fa-question-circle"></i> Previous Questions</h3>
+        <ul style="margin-top: 1rem; padding-left: 1.25rem;">
+            {% for q in questions %}<li style="margin-bottom: 0.5rem;">{{ q }}</li>{% endfor %}
+        </ul>
+        <a href="{{ url_for('student.interview_mock') }}" class="btn btn-secondary" style="margin-top: 1rem;"><i class="fas fa-microphone"></i> Mock Interview</a>
+    </div>
+</div>
+
+<div class="card glass-card" style="padding: 1.5rem; margin-top: 2rem;">
+    <h3><i class="fas fa-comments"></i> Interview Experiences</h3>
+    {% for exp in experiences %}
+    <div style="padding: 1rem; margin-top: 0.75rem; border-left: 3px solid var(--primary); background: rgba(99,102,241,0.05); border-radius: 0 8px 8px 0;">
+        <p>{{ exp }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

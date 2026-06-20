@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Placement Preparation - Learnix{% endblock %}
+{% block content %}
+<div class="page-header animate-fade-in">
+    <div class="page-header-content">
+        <h1><i class="fas fa-briefcase"></i> Placement Preparation Hub</h1>
+        <p>Master aptitude, reasoning, and puzzles with topic-wise quizzes and daily practice.</p>
+    </div>
+</div>
+
+<div class="stats-grid" style="margin-bottom: 2rem;">
+    <div class="stat-card glass-panel">
+        <div class="stat-icon-wrapper" style="background: rgba(99,102,241,0.15); color: #6366F1;"><i class="fas fa-th-large"></i></div>
+        <div class="stat-details"><h3 class="stat-value">{{ modules|length }}</h3><p class="stat-label">Modules</p></div>
+    </div>
+    <div class="stat-card glass-panel">
+        <div class="stat-icon-wrapper streak-accent"><i class="fas fa-fire"></i></div>
+        <div class="stat-details"><h3 class="stat-value">Daily</h3><p class="stat-label">Practice Challenge</p></div>
+    </div>
+</div>
+
+<div class="section-label"><span>Preparation Modules</span></div>
+<div class="grid-cards">
+    {% for key, mod in modules.items() %}
+    <a class="card g1 feature-card-hover" href="{{ url_for('student.placement_module', module_key=key) }}">
+        <div class="card-top">
+            <div>
+                <div class="title">{{ mod.name }}</div>
+                <div class="desc">{{ mod.topics|length }} topics &bull; Topic-wise quizzes</div>
+                {% if module_stats.get(key) %}
+                <div class="progress-badge">{{ module_stats[key].avg_score }}% avg</div>
+                {% endif %}
+            </div>
+            <div class="icon"><i class="fas {{ mod.icon }}"></i></div>
+        </div>
+        <div class="glass-overlay"></div>
+    </a>
+    {% endfor %}
+</div>
+
+{% if weak_topics %}
+<div class="card glass-card" style="margin-top: 2rem; padding: 1.5rem;">
+    <h3 style="margin-bottom: 1rem;"><i class="fas fa-exclamation-triangle" style="color: var(--warning);"></i> Weak Topic Analysis</h3>
+    {% for mod, topics in weak_topics.items() %}
+    <div style="margin-bottom: 0.75rem;">
+        <strong>{{ modules[mod].name if mod in modules else mod }}</strong>:
+        {% for t in topics %}<span class="badge-info" style="margin: 0.2rem;">{{ t.topic }} ({{ t.score_pct }}%)</span>{% endfor %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

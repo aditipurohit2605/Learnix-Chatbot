@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Notes Summarizer - Learnix{% endblock %}
+
+{% block styles %}
+<style>
+    .summarizer-workspace {
+        display: grid;
+        grid-template-columns: 1fr 1.8fr;
+        gap: 2rem;
+        align-items: start;
+    }
+    @media(max-width: 992px) {
+        .summarizer-workspace {
+            grid-template-columns: 1fr;
+        }
+    }
+    .summary-card-link {
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+    .summary-card-link:hover {
+        background: rgba(79, 70, 229, 0.05);
+        border-color: rgba(79, 70, 229, 0.2);
+    }
+    .summary-card-link.active {
+        background: rgba(79, 70, 229, 0.1);
+        border-color: #4F46E5;
+    }
+    .summary-nav-list {
+        max-height: 400px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-title-row" style="margin-bottom: 2rem;">
+    <div>
+        <h1 style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; margin: 0;">Notes Summarizer</h1>
+        <p style="color: #94A3B8; margin: 0.25rem 0 0 0;">Upload lecture slide transcripts, PDFs, or Word documents to get simplified reviews instantly.</p>
+    </div>
+</div>
+
+<div class="summarizer-workspace">
+    
+    <!-- Left Column: Upload notes and Select summary -->
+    <div class="summarizer-controls-col" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        
+        <!-- Document Upload Card -->
+        <div class="card glass-card" style="padding: 1.5rem; border-radius: 16px;">
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-cloud-upload-alt" style="color: #4F46E5;"></i> Upload Note Document
+            </h3>
+            
+            <form id="noteUploadForm" onsubmit="handleNoteUpload(event)">
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <div class="file-drag-zone" style="border: 2px dashed rgba(255,255,255,0.08); border-radius: 12px; padding: 2rem 1.5rem; text-align: center; background: rgba(255,255,255,0.01); transition: all 0.3s; cursor: pointer;" onclick="document.getElementById('noteFileInput').click()">
+                        <i class="fas fa-file-alt" style="font-size: 2.5rem; color: #64748B; margin-bottom: 0.75rem;"></i>
+                        <span style="display: block; font-weight: 600; font-size: 0.9rem;">Choose TXT, Word, or PDF file</span>
+                        <span style="font-size: 0.75rem; color: #64748B; display: block; margin-top: 0.25rem;">Max file size: 16MB</span>
+                        <input type="file" id="noteFileInput" accept=".txt,.pdf,.docx" style="display: none;" onchange="handleFileSelect(this)">
+                    </div>
+                    <div id="selectedFileInfo" style="display: none; font-size: 0.8rem; background: rgba(6,182,212,0.05); color: #06B6D4; padding: 0.5rem 1rem; border-radius: 8px; margin-top: 0.75rem; justify-content: space-between; align-items: center;">
+                        <span id="selectedFileName">file_name.txt</span>
+                        <button type="button" class="btn-close" onclick="clearSelectedFile()" style="background:none; border:none; color:#EF4444; font-size:1rem; cursor:pointer;">&times;</button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block" id="summarizeSubmitBtn" style="width: 100%; border-radius: 10px;" disabled>
+                    Generate Summary <i class="fas fa-sparkles" style="margin-left: 0.5rem;"></i>
+                </button>
+            </form>
+        </div>
+        
+        <!-- Existing Summaries List -->
+        <div class="card glass-card" style="padding: 1.5rem; border-radius: 16px;">
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 1rem 0;">Processed Briefs</h3>
+            
+            <div class="summary-nav-list" id="summaryNavList">
+                {% if summaries %}
+                    {% for sum in summaries %}
+                        <div class="glass-panel summary-card-link" id="sum-link-{{ sum.id }}" onclick="loadSummaryDetails({{ sum.id }}, '{{ sum.title | escape }}', '{{ sum.short_summary | escape }}', '{{ sum.detailed_summary | escape }}', '{{ sum.bullet_points | escape }}', {{ sum.material_id }})" style="padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.04);">
+                            <span style="font-size: 0.75rem; color: #4F46E5; font-weight: 700; display: block;">{{ sum.material.file_type | upper if sum.material else 'TXT' }}</span>
+                            <span style="font-weight: 600; font-size: 0.9rem; display: block; color: #E2E8F0; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ sum.title }}</span>
+                            <span style="font-size: 0.7rem; color: #64748B; display: block; margin-top: 0.25rem;">{{ sum.created_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: #64748B; font-size: 0.85rem; text-align: center; padding: 2rem 0;" id="emptySummariesPlaceholder">No summaries available.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Right Column: Detail Summary View -->
+    <div class="summarizer-details-col">
+        
+        <!-- Generating summary spinner overlay -->
+        <div class="card glass-card" id="summarizerSpinnerCard" style="display: none; text-align: center; padding: 5rem 2rem; border-radius: 20px;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 4rem; color: #4F46E5; margin-bottom: 2rem;"></i>
+            <h2 style="font-family: 'Outfit', sans-serif;">Summarizing Your Document...</h2>
+            <p style="color: #94A3B8; max-width: 400px; margin: 0 auto;">Reading pages text contents and drafting analytical review keys using Learnix AI...</p>
+        </div>
+
+        <!-- Detail Glass Card display -->
+        <div class="card glass-card" id="summaryDetailCard" style="padding: 2.5rem; border-radius: 20px; min-height: 480px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div id="summaryEmptyState" style="text-align: center;">
+                <i class="fas fa-file-invoice" style="font-size: 4rem; color: #475569; margin-bottom: 1.5rem;"></i>
+                <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; margin: 0 0 0.5rem 0;">No Brief Selected</h2>
+                <p style="color: #94A3B8; max-width: 320px; margin: 0 auto;">Select an existing document summary from the left sidebar or upload a new one to begin.</p>
+            </div>
+            
+            <div id="summaryDetailsContent" style="display: none; width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                    <h2 id="detailSummaryTitle" style="font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 800; margin: 0;">Summary Title</h2>
+                    <a href="#" id="detailQuizBtn" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(79,70,229,0.1); border:1px solid rgba(79,70,229,0.2); color:#a5b4fc;">
+                        <i class="fas fa-lightbulb"></i> Create Quiz
+                    </a>
+                </div>
+                
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin: 1.5rem 0 0.5rem 0; color: #06B6D4;"><i class="fas fa-compass"></i> Executive Summary</h3>
+                <p id="detailShortSummary" style="color: #E2E8F0; line-height: 1.6; font-size: 0.95rem;">Short executive summary content here.</p>
+                
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin: 1.5rem 0 0.5rem 0; color: #4F46E5;"><i class="fas fa-align-left"></i> Detailed Explanation</h3>
+                <p id="detailDetailedSummary" style="color: #94A3B8; line-height: 1.6; font-size: 0.9rem; white-space: pre-wrap;">Detailed explanation content here.</p>
+                
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin: 1.5rem 0 0.5rem 0; color: #7C3AED;"><i class="fas fa-list-check"></i> Key Concepts</h3>
+                <ul id="detailBulletPoints" style="color: #E2E8F0; line-height: 1.6; font-size: 0.9rem; padding-left: 1.25rem;">
+                    <li>Concept A</li>
+                    <li>Concept B</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function handleFileSelect(input) {
+        const file = input.files[0];
+        if (file) {
+            document.getElementById('selectedFileName').innerText = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            document.getElementById('selectedFileInfo').style.display = 'flex';
+            document.getElementById('summarizeSubmitBtn').disabled = false;
+        }
+    }
+    
+    function clearSelectedFile() {
+        document.getElementById('noteFileInput').value = '';
+        document.getElementById('selectedFileInfo').style.display = 'none';
+        document.getElementById('summarizeSubmitBtn').disabled = true;
+    }
+    
+    function handleNoteUpload(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById('noteFileInput');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            return;
+        }
+        
+        // Hide views, show spinner
+        document.getElementById('summaryDetailCard').style.display = 'none';
+        document.getElementById('summarizerSpinnerCard').style.display = 'block';
+        
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        
+        fetch('/api/summarize', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('summarizerSpinnerCard').style.display = 'none';
+            document.getElementById('summaryDetailCard').style.display = 'flex';
+            
+            if (data.status === 'success') {
+                showGlobalToast('success', 'Document summarized successfully.');
+                
+                // Clear file input
+                clearSelectedFile();
+                
+                // Remove empty placeholder if it exists
+                const placeholder = document.getElementById('emptySummariesPlaceholder');
+                if (placeholder) placeholder.remove();
+                
+                // Refresh list page context
+                // Prepend to processed briefs sidebar
+                const summariesList = document.getElementById('summaryNavList');
+                
+                // We mock the loading without a full reload
+                const div = document.createElement('div');
+                div.className = 'glass-panel summary-card-link';
+                div.style.padding = '1rem';
+                div.style.borderRadius = '10px';
+                div.style.border = '1px solid rgba(255,255,255,0.04)';
+                div.innerHTML = `
+                    <span style="font-size: 0.75rem; color: #4F46E5; font-weight: 700; display: block;">DOC</span>
+                    <span style="font-weight: 600; font-size: 0.9rem; display: block; color: #E2E8F0; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${data.title}</span>
+                    <span style="font-size: 0.7rem; color: #64748B; display: block; margin-top: 0.25rem;">Just now</span>
+                `;
+                
+                // Add event handler
+                div.onclick = () => loadSummaryDetails(999, data.title, data.short_summary, data.detailed_summary, data.bullet_points.join(" || "), 1);
+                summariesList.insertBefore(div, summariesList.firstChild);
+                
+                // Open newly created summary in the details card
+                loadSummaryDetails(999, data.title, data.short_summary, data.detailed_summary, data.bullet_points.join(" || "), 1);
+                
+            } else {
+                showGlobalToast('danger', data.message || 'Failed to summarize note.');
+            }
+        })
+        .catch(err => {
+            console.error('Note upload failed:', err);
+            document.getElementById('summarizerSpinnerCard').style.display = 'none';
+            document.getElementById('summaryDetailCard').style.display = 'flex';
+            showGlobalToast('danger', 'Error uploading notes to summarization service.');
+        });
+    }
+    
+    function loadSummaryDetails(id, title, shortSummary, detailedSummary, bulletPoints, materialId) {
+        // Remove active class from links
+        const links = document.querySelectorAll('.summary-card-link');
+        links.forEach(l => l.classList.remove('active'));
+        
+        const activeLink = document.getElementById(`sum-link-${id}`);
+        if (activeLink) activeLink.classList.add('active');
+        
+        // Populate text fields
+        document.getElementById('detailSummaryTitle').innerText = title;
+        document.getElementById('detailShortSummary').innerText = shortSummary;
+        document.getElementById('detailDetailedSummary').innerText = detailedSummary;
+        
+        // Bullet points split
+        const listContainer = document.getElementById('detailBulletPoints');
+        listContainer.innerHTML = '';
+        const bullets = bulletPoints.split(" || ");
+        bullets.forEach(b => {
+            if (b.trim() !== '') {
+                const li = document.createElement('li');
+                li.style.marginBottom = '0.5rem';
+                li.innerText = b.trim();
+                listContainer.appendChild(li);
+            }
+        });
+        
+        // Configure quiz shortcut button
+        const quizBtn = document.getElementById('detailQuizBtn');
+        quizBtn.href = `/quiz-gen?subject=Mathematics&material_id=${materialId}`; // Redirect or open quiz page
+
+        
+        // Toggle view
+        document.getElementById('summaryEmptyState').style.display = 'none';
+        document.getElementById('summaryDetailsContent').style.display = 'block';
+        
+        // Scroll details block into focus on mobile
+        document.getElementById('summaryDetailCard').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+{% endblock %}

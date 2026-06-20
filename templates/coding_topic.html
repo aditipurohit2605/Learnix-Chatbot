@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ topic.name }} - Learnix{% endblock %}
+{% block content %}
+<div class="page-header animate-fade-in">
+    <a href="{{ url_for('student.coding_hub') }}" class="back-link"><i class="fas fa-arrow-left"></i> Back to DSA Hub</a>
+    <h1><i class="fas {{ topic.icon }}"></i> {{ topic.name }}</h1>
+    {% if progress %}
+    <p>Progress: {{ progress.problems_solved }}/{{ progress.total_attempted }} solved ({{ progress.score_avg|int }}%)</p>
+    {% endif %}
+</div>
+
+<div class="coding-workspace" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+    <div class="card glass-card" style="padding: 1.5rem;">
+        <h3><i class="fas fa-lightbulb"></i> Practice Problem</h3>
+        <div id="problemArea"><p style="color: var(--text-muted);">Click "Load Problem" to get a practice question.</p></div>
+        <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+            <select id="difficultySelect" class="form-control" style="width: auto;">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+            <button id="loadProblemBtn" class="btn btn-primary"><i class="fas fa-sync"></i> Load Problem</button>
+            <button id="markSolvedBtn" class="btn btn-secondary" style="display:none;"><i class="fas fa-check"></i> Mark Solved</button>
+        </div>
+    </div>
+    <div class="card glass-card" style="padding: 1.5rem;">
+        <h3><i class="fas fa-robot"></i> AI Explanation</h3>
+        <div id="explanationArea" class="markdown-content" style="max-height: 400px; overflow-y: auto;">
+            <p style="color: var(--text-muted);">Load a problem to get AI-powered explanations with code and complexity analysis.</p>
+        </div>
+        <button id="getExplanationBtn" class="btn btn-secondary" style="margin-top: 1rem;"><i class="fas fa-magic"></i> Get AI Explanation</button>
+    </div>
+</div>
+
+<div class="roadmap-bar glass-card" style="padding: 1rem; margin-top: 2rem;">
+    <span style="font-weight: 600;">Next topics: </span>
+    {% for key, t in all_topics.items() %}
+    {% if t.order > topic.order %}
+    <a href="{{ url_for('student.coding_topic', topic_key=key) }}" class="roadmap-chip">{{ t.name }} &rarr;</a>
+    {% endif %}
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const topicKey = '{{ topic_key }}';
+let currentProblem = null;
+
+document.getElementById('loadProblemBtn').addEventListener('click', async () => {
+    const difficulty = document.getElementById('difficultySelect').value;
+    const res = await fetch('/api/coding/practice', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({topic: topicKey, difficulty})
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+        currentProblem = data.problem;
+        document.getElementById('problemArea').innerHTML = `
+            <p><strong>${currentProblem.question_text}</strong></p>
+            <p style="color: var(--accent); margin-top: 0.5rem;">Difficulty: ${currentProblem.difficulty || difficulty}</p>
+            ${currentProblem.hint ? '<p style="color: var(--text-muted); font-size: 0.9rem;">Hint: ' + currentProblem.hint + '</p>' : ''}`;
+        document.getElementById('markSolvedBtn').style.display = 'inline-flex';
+        document.getElementById('explanationArea').innerHTML = '<p style="color: var(--text-muted);">Click "Get AI Explanation" for a detailed solution.</p>';
+    }
+});
+
+document.getElementById('getExplanationBtn').addEventListener('click', async () => {
+    document.getElementById('explanationArea').innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Generating explanation...</p>';
+    const res = await fetch('/api/coding/explain', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({topic: topicKey, question: currentProblem?.question_text})
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+        document.getElementById('explanationArea').innerHTML = '<div class="ai-response">' + data.explanation.replace(/\n/g, '<br>') + '</div>';
+    }
+});
+
+document.getElementById('markSolvedBtn').addEventListener('click', async () => {
+    const difficulty = document.getElementById('difficultySelect').value;
+    await fetch('/api/coding/submit', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({topic: topicKey, difficulty, solved: true})
+    });
+    document.getElementById('markSolvedBtn').textContent = '✓ Recorded!';
+});
+</script>
+{% endblock %}

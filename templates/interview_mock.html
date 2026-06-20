@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Mock Interview - Learnix{% endblock %}
+{% block content %}
+<div class="page-header animate-fade-in">
+    <a href="{{ url_for('student.interview_hub') }}" class="back-link"><i class="fas fa-arrow-left"></i> Back to Interview Prep</a>
+    <h1><i class="fas fa-microphone-alt"></i> AI Mock Interview</h1>
+    <p>Practice with our AI interviewer and get instant feedback with confidence scores.</p>
+</div>
+
+<div class="card glass-card" style="padding: 2rem;">
+    <div id="setupArea">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Interview Type</label>
+                <select id="interviewType" class="form-control">
+                    <option value="technical" {% if interview_type == 'technical' %}selected{% endif %}>Technical</option>
+                    <option value="hr" {% if interview_type == 'hr' %}selected{% endif %}>HR</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Topic</label>
+                <select id="topicSelect" class="form-control">
+                    {% if interview_type == 'hr' %}
+                        {% for t in hr_topics %}<option value="{{ t }}" {% if topic == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+                    {% else %}
+                        {% for t in tech_topics %}<option value="{{ t }}" {% if topic == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+            <div class="form-group" style="align-self: flex-end;">
+                <button id="startInterviewBtn" class="btn btn-primary"><i class="fas fa-play"></i> Start Interview</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="interviewArea" style="display: none;">
+        <div class="interviewer-badge" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: rgba(99,102,241,0.1); border-radius: 12px;">
+            <div class="bot-badge-icon" style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center;"><i class="fas fa-user-tie"></i></div>
+            <div><strong>AI Interviewer</strong><br><span style="color: var(--text-muted); font-size: 0.85rem;">Answer each question thoughtfully. Use STAR method for HR questions.</span></div>
+        </div>
+        <div id="questionsContainer"></div>
+        <button id="submitInterviewBtn" class="btn btn-primary" style="margin-top: 1.5rem;"><i class="fas fa-paper-plane"></i> Submit & Get Feedback</button>
+    </div>
+
+    <div id="feedbackArea" style="display: none; margin-top: 2rem;"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let sessionQuestions = [];
+
+document.getElementById('interviewType').addEventListener('change', function() {
+    const isHr = this.value === 'hr';
+    const topics = isHr ? {{ hr_topics|tojson }} : {{ tech_topics|tojson }};
+    document.getElementById('topicSelect').innerHTML = topics.map(t => `<option value="${t}">${t}</option>`).join('');
+});
+
+document.getElementById('startInterviewBtn').addEventListener('click', async () => {
+    const type = document.getElementById('interviewType').value;
+    const topic = document.getElementById('topicSelect').value;
+    document.getElementById('startInterviewBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting...';
+    const res = await fetch('/api/interview/mock/start', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({type, topic})
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+        sessionQuestions = data.questions;
+        document.getElementById('setupArea').style.display = 'none';
+        document.getElementById('interviewArea').style.display = 'block';
+        document.getElementById('questionsContainer').innerHTML = sessionQuestions.map((q, i) => `
+            <div style="margin-bottom: 1.5rem; padding: 1rem; border: 1px solid var(--card-border); border-radius: 12px;">
+                <p><strong>Q${i+1}:</strong> ${q}</p>
+                <textarea class="form-control" id="answer${i}" rows="4" placeholder="Type your answer here..." style="margin-top: 0.75rem;"></textarea>
+            </div>
+        `).join('');
+    }
+    document.getElementById('startInterviewBtn').innerHTML = '<i class="fas fa-play"></i> Start Interview';
+});
+
+document.getElementById('submitInterviewBtn').addEventListener('click', async () => {
+    const answers = sessionQuestions.map((_, i) => document.getElementById(`answer${i}`).value);
+    const res = await fetch('/api/interview/mock/submit', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            type: document.getElementById('interviewType').value,
+            topic: document.getElementById('topicSelect').value,
+            questions: sessionQuestions, answers
+        })
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+        document.getElementById('feedbackArea').style.display = 'block';
+        document.getElementById('feedbackArea').innerHTML = `
+            <div style="padding: 1.5rem; background: rgba(16,185,129,0.1); border-radius: 12px; margin-bottom: 1.5rem;">
+                <h3>Confidence Score: ${data.confidence_score}%</h3>
+            </div>
+            ${data.feedback.map(f => `
+                <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--card-border); border-radius: 12px;">
+                    <p><strong>Q:</strong> ${f.question}</p>
+                    <p style="color: var(--accent); margin-top: 0.5rem;"><strong>Feedback:</strong> ${f.feedback}</p>
+                    <span class="badge-info">Confidence: ${Math.round(f.confidence)}%</span>
+                </div>
+            `).join('')}`;
+        document.getElementById('submitInterviewBtn').style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

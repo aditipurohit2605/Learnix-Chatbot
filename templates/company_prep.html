@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Company Preparation - Learnix{% endblock %}
+{% block content %}
+<div class="page-header animate-fade-in">
+    <h1><i class="fas fa-building"></i> Company Wise Preparation</h1>
+    <p>Prepare for top companies with previous questions, patterns, and interview experiences.</p>
+</div>
+
+<div class="grid-cards">
+    {% for key, company in companies.items() %}
+    <a class="card g3 feature-card-hover" href="{{ url_for('student.company_detail', company_key=key) }}">
+        <div class="card-top">
+            <div>
+                <div class="title">{{ company.name }}</div>
+                <div class="desc">{{ company.pattern }}</div>
+            </div>
+            <div class="icon"><i class="fas fa-building"></i></div>
+        </div>
+        <div class="glass-overlay"></div>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

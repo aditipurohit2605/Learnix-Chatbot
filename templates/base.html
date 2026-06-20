@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Learnix - AI Engineering & Placement Success Platform{% endblock %}</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Styleheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block styles %}{% endblock %}
+</head>
+<body {% block body_class %}{% endblock %}>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="toast toast-{{ category }}" role="alert">
+                        <div class="toast-icon">
+                            {% if category == 'success' %}
+                                <i class="fas fa-check-circle"></i>
+                            {% elif category == 'danger' %}
+                                <i class="fas fa-exclamation-circle"></i>
+                            {% elif category == 'warning' %}
+                                <i class="fas fa-exclamation-triangle"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle"></i>
+                            {% endif %}
+                        </div>
+                        <div class="toast-content">{{ message }}</div>
+                        <button class="toast-close-btn" onclick="this.parentElement.remove()">&times;</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- App Main Layout Container -->
+    <div class="app-layout">
+        
+    {% if current_user.is_authenticated %}
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar" id="appSidebar" aria-label="Main Navigation">
+            <!-- Sidebar Header with Logo -->
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-brain"></i> Learnix
+                </div>
+                <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close sidebar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- User Profile Section -->
+            <div class="sidebar-profile">
+                {% from 'macros.html' import user_avatar %}
+                {{ user_avatar(current_user, 'md', 'sidebar-avatar-el') }}
+                <div class="profile-details">
+                    <div class="profile-name">{{ current_user.username }}</div>
+                    <div class="profile-role">{{ current_user.role|title }}</div>
+                </div>
+            </div>
+
+            <!-- Navigation List -->
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                {% if current_user.role == 'admin' %}
+                    <li class="nav-item">
+                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link" data-route="dashboard">
+                            <i class="fas fa-home nav-icon"></i>
+                            <span>Home</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('admin.manage_students') }}" class="nav-link" data-route="students">
+                            <i class="fas fa-users nav-icon"></i>
+                            <span>Students</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('admin.manage_materials') }}" class="nav-link" data-route="materials">
+                            <i class="fas fa-folder-open nav-icon"></i>
+                            <span>Materials</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('admin.manage_chatbot') }}" class="nav-link" data-route="admin_chatbot">
+                            <i class="fas fa-database nav-icon"></i>
+                            <span>Chatbot KB</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.dashboard') }}" class="nav-link" data-route="dashboard">
+                            <i class="fas fa-home nav-icon"></i>
+                            <span>Home</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.chatbot') }}" class="nav-link" data-route="chatbot">
+                            <i class="fas fa-comments nav-icon"></i>
+                            <span>Chat</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.subjects') }}" class="nav-link" data-route="subjects">
+                            <i class="fas fa-book-open nav-icon"></i>
+                            <span>Subjects</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.summarizer') }}" class="nav-link" data-route="summarizer">
+                            <i class="fas fa-file-alt nav-icon"></i>
+                            <span>Summarizer</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.quiz_gen') }}" class="nav-link" data-route="quiz_gen">
+                            <i class="fas fa-lightbulb nav-icon"></i>
+                            <span>Quiz Generator</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.daily_quiz') }}" class="nav-link" data-route="daily_quiz">
+                            <i class="fas fa-fire nav-icon"></i>
+                            <span>Daily Quiz</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.progress') }}" class="nav-link" data-route="progress">
+                            <i class="fas fa-chart-line nav-icon"></i>
+                            <span>Progress</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.leaderboard') }}" class="nav-link" data-route="leaderboard">
+                            <i class="fas fa-trophy nav-icon"></i>
+                            <span>Leaderboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-divider"></li>
+                    <li class="nav-section-label">Career & Placement</li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.placement_hub') }}" class="nav-link" data-route="placement">
+                            <i class="fas fa-briefcase nav-icon"></i>
+                            <span>Placement Prep</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.coding_hub') }}" class="nav-link" data-route="coding">
+                            <i class="fas fa-code nav-icon"></i>
+                            <span>Coding Practice</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.interview_hub') }}" class="nav-link" data-route="interview">
+                            <i class="fas fa-microphone nav-icon"></i>
+                            <span>Interview Prep</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.resume_builder') }}" class="nav-link" data-route="resume">
+                            <i class="fas fa-file-alt nav-icon"></i>
+                            <span>Resume Builder</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.company_prep') }}" class="nav-link" data-route="company">
+                            <i class="fas fa-building nav-icon"></i>
+                            <span>Company Prep</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.career_roadmap') }}" class="nav-link" data-route="career">
+                            <i class="fas fa-route nav-icon"></i>
+                            <span>Career Roadmap</span>
+                        </a>
+                    </li>
+                    <li class="nav-divider"></li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('student.notifications') }}" class="nav-link" data-route="notifications">
+                            <i class="fas fa-bell nav-icon"></i>
+                            <span>Notifications</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('auth.profile') }}" class="nav-link" data-route="profile">
+                            <i class="fas fa-user-circle nav-icon"></i>
+                            <span>Profile</span>
+                        </a>
+                    </li>
+                {% endif %}
+                </ul>
+            </nav>
+
+            <!-- Logout Link -->
+            <div style="margin-top: auto;">
+                <div class="nav-divider"></div>
+                <a href="{{ url_for('auth.logout') }}" class="nav-link logout-link">
+                    <i class="fas fa-sign-out-alt nav-icon"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+    {% endif %}
+
+        <!-- Main Body Wrapper -->
+        <main class="app-body">
+            
+            {% if current_user.is_authenticated %}
+                <!-- Top Navbar -->
+                <header class="app-header">
+                    <div class="header-left">
+                        <button class="sidebar-toggle-btn" id="sidebarToggleBtn">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        
+                        <!-- Global Search Everywhere -->
+                        <div class="header-search">
+                            <form action="{{ url_for('student.chat_history') if current_user.role == 'student' else url_for('admin.manage_students') }}" method="GET" class="search-form">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" name="q" placeholder="Search materials, quizzes..." class="search-input" id="searchEverywhere" required>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="header-right">
+                        <!-- Dark Mode Toggle Button -->
+                        <button class="header-action-btn theme-toggle-btn" id="themeToggleBtn" title="Toggle Theme">
+                            <i class="fas fa-sun" id="themeSun"></i>
+                            <i class="fas fa-moon" id="themeMoon"></i>
+                        </button>
+                        
+
+                    </div>
+                </header>
+            {% endif %}
+
+            <!-- Dynamic Content Area -->
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
+            
+            <!-- Footer -->
+            <footer class="app-footer">
+                <p>&copy; 2026 Learnix. AI-Powered Engineering & Placement Success Platform.</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Core Layout JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

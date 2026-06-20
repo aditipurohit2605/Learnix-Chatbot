@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Learnix{% endblock %}
+
+{% block content %}
+<div class="dashboard-header-banner">
+    <div class="banner-text">
+        <h1>Welcome Back, <span>{{ current_user.username }}</span>!</h1>
+        <p>Your all-in-one AI platform for engineering academics, placements, coding, interviews, and career growth.</p>
+    </div>
+    <div class="banner-visual">
+        <i class="fas fa-user-astronaut banner-icon"></i>
+    </div>
+</div>
+
+<!-- Key Learning Stats -->
+<div class="stats-grid">
+    
+    <div class="stat-card">
+        <div class="stat-icon-wrapper streak-accent">
+            <i class="fas fa-fire-alt"></i>
+        </div>
+        <div class="stat-details">
+            <h3 class="stat-value">{{ streak }} Days</h3>
+            <p class="stat-label">Learning Streak</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon-wrapper points-accent">
+            <i class="fas fa-award"></i>
+        </div>
+        <div class="stat-details">
+            <h3 class="stat-value">{{ points }} pts</h3>
+            <p class="stat-label">Total Points Earned</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon-wrapper quizzes-accent">
+            <i class="fas fa-brain"></i>
+        </div>
+        <div class="stat-details">
+            <h3 class="stat-value">{{ total_quizzes }} Completed</h3>
+            <p class="stat-label">Quizzes Generated</p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon-wrapper files-accent">
+            <i class="fas fa-file-invoice"></i>
+        </div>
+        <div class="stat-details">
+            <h3 class="stat-value">{{ total_materials }} Files</h3>
+            <p class="stat-label">Uploaded Notes</p>
+        </div>
+    </div>
+
+    {% if readiness %}
+    <div class="stat-card">
+        <div class="stat-icon-wrapper" style="background: rgba(99,102,241,0.15); color: #6366F1;">
+            <i class="fas fa-chart-bar"></i>
+        </div>
+        <div class="stat-details">
+            <h3 class="stat-value">{{ readiness.overall_readiness }}%</h3>
+            <p class="stat-label">Overall Readiness</p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- AI Recommendations and Actions -->
+<div class="dashboard-main-row">
+
+<!-- Feature Cards Grid (merged from redesign) -->
+<div class="left-col">
+    <div class="grid-cards">
+        <a class="card g1" href="{{ url_for('student.subjects') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">📚 Subjects</div>
+                    <div class="desc">Pick subjects and personalize learning</div>
+                </div>
+                <div class="icon"><i class="fas fa-book-open"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g2" href="{{ url_for('student.chatbot') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">AI Tutor</div>
+                    <div class="desc">Ask questions and get guided answers</div>
+                </div>
+                <div class="icon"><i class="fas fa-comments"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g3" href="{{ url_for('student.summarizer') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">📝 Notes Summarizer</div>
+                    <div class="desc">Upload notes and get concise summaries</div>
+                </div>
+                <div class="icon"><i class="fas fa-file-alt"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g4" href="{{ url_for('student.quiz_gen') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">🎯 Quiz Generator</div>
+                    <div class="desc">Generate quizzes from content</div>
+                </div>
+                <div class="icon"><i class="fas fa-lightbulb"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g5" href="{{ url_for('student.progress') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">📊 Progress Dashboard</div>
+                    <div class="desc">Track performance and trends</div>
+                </div>
+                <div class="icon"><i class="fas fa-chart-pie"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g1" href="{{ url_for('student.leaderboard') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">🏆 Leaderboard</div>
+                    <div class="desc">See top learners and achievements</div>
+                </div>
+                <div class="icon"><i class="fas fa-trophy"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g2" href="{{ url_for('student.daily_quiz') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">Daily Quiz</div>
+                    <div class="desc">Sharpen skills with daily challenges</div>
+                </div>
+                <div class="icon"><i class="fas fa-fire"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g3" href="{{ url_for('student.weak_topics') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">Weak Topic Detection</div>
+                    <div class="desc">Identify topics to improve</div>
+                </div>
+                <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g4" href="{{ url_for('student.chat_history') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">Chat History</div>
+                    <div class="desc">Review past conversations</div>
+                </div>
+                <div class="icon"><i class="fas fa-history"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g5 placement-card" href="{{ url_for('student.placement_hub') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">💼 Placement Preparation</div>
+                    <div class="desc">Aptitude, reasoning, puzzles & daily practice</div>
+                </div>
+                <div class="icon"><i class="fas fa-briefcase"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g1 coding-card" href="{{ url_for('student.coding_hub') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">💻 Coding Practice</div>
+                    <div class="desc">DSA topics with AI explanations</div>
+                </div>
+                <div class="icon"><i class="fas fa-code"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g2 interview-card" href="{{ url_for('student.interview_hub') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">🎤 Interview Preparation</div>
+                    <div class="desc">Mock interviews with AI feedback</div>
+                </div>
+                <div class="icon"><i class="fas fa-microphone"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g3 resume-card" href="{{ url_for('student.resume_builder') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">📄 Resume Builder</div>
+                    <div class="desc">ATS-friendly resume with PDF export</div>
+                </div>
+                <div class="icon"><i class="fas fa-file-alt"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+        
+        <a class="card g4" href="{{ url_for('student.chatbot') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">💬 Communication Skills</div>
+                    <div class="desc">HR interview, GD, email writing & more</div>
+                </div>
+                <div class="icon"><i class="fas fa-comments"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g4 company-card" href="{{ url_for('student.company_prep') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">🏢 Company Preparation</div>
+                    <div class="desc">TCS, Infosys, Amazon, Google & more</div>
+                </div>
+                <div class="icon"><i class="fas fa-building"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+        <a class="card g5 career-card" href="{{ url_for('student.career_roadmap') }}">
+            <div class="card-top">
+                <div>
+                    <div class="title">🚀 Career Roadmap</div>
+                    <div class="desc">AI-guided career paths & courses</div>
+                </div>
+                <div class="icon"><i class="fas fa-route"></i></div>
+            </div>
+            <div class="glass-overlay"></div>
+        </a>
+
+    </div>
+</div>
+    
+    <!-- Left Column: Recommendations and Badges -->
+    <div class="left-col" style="display: flex; flex-direction: column; gap: 2rem;">
+        
+        <!-- Recommendations -->
+        <div class="card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h2 style="font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-sparkles" style="color: var(--accent);"></i> AI Recommendations
+                </h2>
+                <span class="badge-info">Personalized</span>
+            </div>
+            
+            <div class="rec-list">
+                {% if recommendations %}
+                    {% for rec in recommendations %}
+                        <div class="rec-item">
+                            <div class="rec-icon-wrapper">
+                                <i class="fas fa-{{ rec.icon }}"></i>
+                            </div>
+                            <div class="rec-content">
+                                <h4>{{ rec.title }}</h4>
+                                <p>{{ rec.description }}</p>
+                            </div>
+                            <div class="rec-action">
+                                <a href="{{ rec.action_url }}" class="btn btn-sm btn-primary">{{ rec.action_text }}</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: #94A3B8; text-align: center; margin: 2rem 0;">No active recommendations. Try uploading study materials or solving a quiz!</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Achievements / Badges -->
+        <div class="card">
+            <div class="card-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-trophy" style="color: var(--warning);"></i> Earned Badges
+                </h2>
+                <a href="{{ url_for('student.leaderboard') }}" style="color: var(--primary); font-size: 0.85rem; font-weight: 700; text-decoration: none;">View All</a>
+            </div>
+            
+            <div class="badges-grid">
+                
+                <!-- Badge 1: Beginner Learner -->
+                {% set owns_beginner = achievements | selectattr("badge_code", "equalto", "beginner_learner") | list | length > 0 %}
+                <div class="badge-item {% if not owns_beginner %}badge-locked{% endif %}">
+                    <div class="badge-icon-shield badge-beginner {% if not owns_beginner %}badge-locked{% endif %}">
+                        <i class="fas fa-seedling"></i>
+                    </div>
+                    <span>Beginner</span>
+                </div>
+                
+                <!-- Badge 2: Quiz Master -->
+                {% set owns_quiz = achievements | selectattr("badge_code", "equalto", "quiz_master") | list | length > 0 %}
+                <div class="badge-item {% if not owns_quiz %}badge-locked{% endif %}">
+                    <div class="badge-icon-shield badge-quiz {% if not owns_quiz %}badge-locked{% endif %}">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <span>Quiz Master</span>
+                </div>
+                
+                <!-- Badge 3: Streak Hero -->
+                {% set owns_streak = achievements | selectattr("badge_code", "equalto", "streak_hero") | list | length > 0 %}
+                <div class="badge-item {% if not owns_streak %}badge-locked{% endif %}">
+                    <div class="badge-icon-shield badge-streak {% if not owns_streak %}badge-locked{% endif %}">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <span>Streak Hero</span>
+                </div>
+
+                <!-- Badge 4: AI Explorer -->
+                {% set owns_explorer = achievements | selectattr("badge_code", "equalto", "ai_explorer") | list | length > 0 %}
+                <div class="badge-item {% if not owns_explorer %}badge-locked{% endif %}">
+                    <div class="badge-icon-shield badge-explorer {% if not owns_explorer %}badge-locked{% endif %}">
+                        <i class="fas fa-atom"></i>
+                    </div>
+                    <span>AI Explorer</span>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Column: Recent Activity Logs -->
+    <div class="right-col">
+        <div class="card">
+            <div class="card-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h2 style="font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-history" style="color: var(--secondary);"></i> Recent Activity
+                </h2>
+            </div>
+            
+            <div class="activity-timeline">
+                {% if activities %}
+                    {% for act in activities %}
+                        <div class="activity-entry">
+                            <div class="timeline-dot"></div>
+                            <div class="activity-body">
+                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary);">{{ act.action }}</span>
+                                {% if act.details %}
+                                    <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ act.details }}</span>
+                                {% endif %}
+                                <span style="font-size: 0.7rem; color: var(--text-muted);">{{ act.timestamp.strftime('%b %d, %H:%M') }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: auto; margin-bottom: auto; padding: 2rem 0;">No activities logged yet.</p>
+                {% endif %}
+            </div>
+        </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

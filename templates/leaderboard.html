@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard - Learnix{% endblock %}
+
+{% block styles %}
+<style>
+    .podium-container {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+        padding-top: 2rem;
+    }
+    @media(max-width: 576px) {
+        .podium-container {
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+    }
+    .podium-card {
+        background: #1E293B;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem 1.25rem;
+        text-align: center;
+        width: 100%;
+        max-width: 170px;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    .podium-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(79, 70, 229, 0.25);
+    }
+    .podium-card.rank-1 {
+        height: 240px;
+        background: radial-gradient(circle at top, rgba(234, 179, 8, 0.1) 0%, rgba(30, 41, 59, 1) 80%);
+        border-color: rgba(234, 179, 8, 0.2);
+    }
+    .podium-card.rank-2 {
+        height: 210px;
+        background: radial-gradient(circle at top, rgba(148, 163, 184, 0.1) 0%, rgba(30, 41, 59, 1) 80%);
+        border-color: rgba(148, 163, 184, 0.2);
+    }
+    .podium-card.rank-3 {
+        height: 180px;
+        background: radial-gradient(circle at top, rgba(180, 83, 9, 0.1) 0%, rgba(30, 41, 59, 1) 80%);
+        border-color: rgba(180, 83, 9, 0.2);
+    }
+    .podium-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid;
+    }
+    .rank-1 .podium-avatar { border-color: #EAB308; box-shadow: 0 0 15px rgba(234,179,8,0.25); }
+    .rank-2 .podium-avatar { border-color: #94A3B8; box-shadow: 0 0 15px rgba(148,163,184,0.25); }
+    .rank-3 .podium-avatar { border-color: #B45309; box-shadow: 0 0 15px rgba(180,83,9,0.25); }
+    
+    .podium-crown {
+        position: absolute;
+        top: -1.25rem;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 1.5rem;
+    }
+    .rank-1 .podium-crown { color: #EAB308; }
+    .rank-2 .podium-crown { color: #94A3B8; }
+    .rank-3 .podium-crown { color: #B45309; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-title-row" style="margin-bottom: 2rem;">
+    <div>
+        <h1 style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; margin: 0;">Leaderboard</h1>
+        <p style="color: #94A3B8; margin: 0.25rem 0 0 0;">Compete with students globally. Earn points, maintain active streaks, and secure top rank achievements!</p>
+    </div>
+</div>
+
+<!-- TOP 3 PODIUM VISUALS -->
+{% if standings | length >= 3 %}
+    <div class="podium-container">
+        
+        <!-- 2nd Place -->
+        <div class="podium-card rank-2 glass-card">
+            <div class="podium-crown"><i class="fas fa-medal"></i></div>
+            {% if standings[1].avatar and standings[1].avatar != 'default_avatar.png' %}
+                <img src="{{ url_for('static', filename='uploads/avatars/' + standings[1].avatar) }}" alt="2nd Place" class="podium-avatar">
+            {% else %}
+                <div class="avatar-initials podium-avatar">{{ standings[1].username[:2] | upper }}</div>
+            {% endif %}
+            <h4 style="margin: 0.75rem 0 0.25rem 0; font-size: 0.95rem; font-weight: 700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ standings[1].username }}</h4>
+            <span style="font-size: 0.75rem; color:#94A3B8; display:block;">Rank #2</span>
+            <strong style="font-size: 1.1rem; color:#fff; display:block; margin-top:0.5rem;">{{ standings[1].points }} pts</strong>
+        </div>
+        
+        <!-- 1st Place -->
+        <div class="podium-card rank-1 glass-card">
+            <div class="podium-crown"><i class="fas fa-crown"></i></div>
+            {% if standings[0].avatar and standings[0].avatar != 'default_avatar.png' %}
+                <img src="{{ url_for('static', filename='uploads/avatars/' + standings[0].avatar) }}" alt="1st Place" class="podium-avatar">
+            {% else %}
+                <div class="avatar-initials podium-avatar">{{ standings[0].username[:2] | upper }}</div>
+            {% endif %}
+            <h4 style="margin: 0.75rem 0 0.25rem 0; font-size: 1.05rem; font-weight: 700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ standings[0].username }}</h4>
+            <span style="font-size: 0.75rem; color:#EAB308; display:block; font-weight:600;">Rank #1</span>
+            <strong style="font-size: 1.25rem; color:#fff; display:block; margin-top:0.5rem;">{{ standings[0].points }} pts</strong>
+        </div>
+        
+        <!-- 3rd Place -->
+        <div class="podium-card rank-3 glass-card">
+            <div class="podium-crown"><i class="fas fa-medal"></i></div>
+            {% if standings[2].avatar and standings[2].avatar != 'default_avatar.png' %}
+                <img src="{{ url_for('static', filename='uploads/avatars/' + standings[2].avatar) }}" alt="3rd Place" class="podium-avatar">
+            {% else %}
+                <div class="avatar-initials podium-avatar">{{ standings[2].username[:2] | upper }}</div>
+            {% endif %}
+            <h4 style="margin: 0.75rem 0 0.25rem 0; font-size: 0.95rem; font-weight: 700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ standings[2].username }}</h4>
+            <span style="font-size: 0.75rem; color:#94A3B8; display:block;">Rank #3</span>
+            <strong style="font-size: 1.1rem; color:#fff; display:block; margin-top:0.5rem;">{{ standings[2].points }} pts</strong>
+        </div>
+        
+    </div>
+{% endif %}
+
+<!-- DETAILED STANDINGS LIST -->
+<div class="leaderboard-grid" style="display: grid; grid-template-columns: 2.2fr 1fr; gap: 2rem; align-items: start;">
+    
+    <!-- Left Panel: Ranking Table -->
+    <div class="card glass-card" style="padding: 1.5rem; border-radius: 16px; overflow-x: auto;">
+        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 700; margin: 0 0 1.5rem 0;">Overall Standings</h3>
+        
+        <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); color: #64748B; font-size: 0.85rem; font-weight: 600;">
+                    <th style="padding: 0.75rem 1rem;">Rank</th>
+                    <th style="padding: 0.75rem 1rem;">Student</th>
+                    <th style="padding: 0.75rem 1rem; text-align: center;">Streak</th>
+                    <th style="padding: 0.75rem 1rem; text-align: center;">Badges</th>
+                    <th style="padding: 0.75rem 1rem; text-align: right;">Points</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for st in standings %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 0.95rem; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.01)'" onmouseout="this.style.background='none'">
+                        <!-- Rank -->
+                        <td style="padding: 1.25rem 1rem; font-weight: 700; color: {% if st.rank == 1 %}#EAB308{% elif st.rank == 2 %}#94A3B8{% elif st.rank == 3 %}#B45309{% else %}#64748B{% endif %};">
+                            #{{ st.rank }}
+                        </td>
+                        <!-- Student Profile -->
+                        <td style="padding: 1.25rem 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                {% if st.avatar and st.avatar != 'default_avatar.png' %}
+                                    <img src="{{ url_for('static', filename='uploads/avatars/' + st.avatar) }}" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                                {% else %}
+                                    <div class="avatar-initials" style="width: 32px; height: 32px; font-size: 0.75rem; margin: 0;">{{ st.username[:2] | upper }}</div>
+                                {% endif %}
+                                <strong style="color: {% if st.user_id == current_user.id %}#4F46E5{% else %}#fff{% endif %};">{{ st.username }}</strong>
+                                {% if st.user_id == current_user.id %}
+                                    <span class="badge badge-primary" style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">You</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <!-- Streak -->
+                        <td style="padding: 1.25rem 1rem; text-align: center; font-weight: 700; color: #EF4444;">
+                            {% if st.streak > 0 %}
+                                <i class="fas fa-fire-alt"></i> {{ st.streak }}
+                            {% else %}
+                                <span style="color: #475569;">-</span>
+                            {% endif %}
+                        </td>
+                        <!-- Badges Mini Symbols -->
+                        <td style="padding: 1.25rem 1rem; text-align: center;">
+                            <div style="display: inline-flex; gap: 0.35rem;">
+                                {% if 'beginner_learner' in st.badges %}
+                                    <i class="fas fa-seedling" style="color: #06B6D4;" title="Beginner Learner"></i>
+                                {% endif %}
+                                {% if 'quiz_master' in st.badges %}
+                                    <i class="fas fa-graduation-cap" style="color: #EAB308;" title="Quiz Master"></i>
+                                {% endif %}
+                                {% if 'streak_hero' in st.badges %}
+                                    <i class="fas fa-fire" style="color: #EF4444;" title="Streak Hero"></i>
+                                {% endif %}
+                                {% if 'ai_explorer' in st.badges %}
+                                    <i class="fas fa-atom" style="color: #7C3AED;" title="AI Explorer"></i>
+                                {% endif %}
+                                {% if 'top_ranker' in st.badges %}
+                                    <i class="fas fa-crown" style="color: #EAB308;" title="Top Ranker"></i>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <!-- Points -->
+                        <td style="padding: 1.25rem 1rem; text-align: right; font-weight: 700; color: #F8FAFC;">
+                            {{ st.points }} pts
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Right Panel: Your Stats -->
+    <div class="leaderboard-my-summary-panel">
+        <div class="card glass-card" style="padding: 1.5rem; border-radius: 16px; text-align: center;">
+            <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 700; margin: 0 0 1.25rem 0;">Your Standing</h3>
+            
+            {% if has_custom_avatar(current_user) %}
+            <div class="user-avatar-bubble">
+                <img src="{{ url_for('static', filename='uploads/avatars/' + current_user.avatar) }}" alt="You">
+            </div>
+            {% else %}
+            <div class="avatar-initials avatar-initials-lg" style="margin: 0 auto 1rem;">{{ user_initials(current_user) }}</div>
+            {% endif %}
+            
+            <h4 style="margin: 0 0 0.25rem 0; font-size: 1.1rem; font-weight: 700;">{{ current_user.username }}</h4>
+            <span style="font-size: 0.8rem; color:#94A3B8; display:block; margin-bottom: 1.5rem;">Rank: <strong>#{{ current_user_rank if current_user_rank else '-' }}</strong></span>
+            
+            <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.25rem; display: flex; justify-content: space-around;">
+                <div>
+                    <span style="font-size: 0.75rem; color:#64748B; display:block;">TOTAL POINTS</span>
+                    <strong style="font-size: 1.15rem; color:#fff;">{{ current_user.profile.total_points if current_user.profile else 0 }}</strong>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; color:#64748B; display:block;">BADGES OWNED</span>
+                    <strong style="font-size: 1.15rem; color:#fff;">{{ user_achievements | length }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

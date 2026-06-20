@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Select Subject - Learnix{% endblock %}
+
+{% block content %}
+<div class="page-title-row" style="margin-bottom: 2rem;">
+    <div>
+        <h1 style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; margin: 0;">Select Subject</h1>
+        <p style="color: #94A3B8; margin: 0.25rem 0 0 0;">Choose a subject to solve doubts with AI or generate practice tests.</p>
+    </div>
+</div>
+
+<div class="subjects-layout subjects-page-layout">
+    
+    <!-- Left Panel: Grid of subjects -->
+    <div class="subjects-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem;">
+        {% if subjects %}
+            {% for sub in subjects %}
+                <div class="card glass-card subject-item-card" style="padding: 1.5rem; border-radius: 16px; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s ease;">
+                    <div class="subject-card-glow" style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(to bottom, #4F46E5, #7C3AED);"></div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <span class="badge" style="font-size: 0.75rem; background: rgba(79,70,229,0.1); color: #a5b4fc; font-weight: 700;">{{ sub.code }}</span>
+                        {% if sub.is_custom %}
+                            <span class="badge badge-success" style="font-size: 0.65rem;">Custom</span>
+                        {% endif %}
+                    </div>
+                    
+                    <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; margin: 0 0 0.5rem 0;">{{ sub.name }}</h3>
+                    <p style="color: #94A3B8; font-size: 0.85rem; line-height: 1.4; margin: 0 0 1.5rem 0;">Explore doubts, solve custom problems, or play quizzes on {{ sub.name }}.</p>
+                    
+                    <div class="subject-card-actions" style="margin-top: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <a href="{{ url_for('student.chatbot', subject_id=sub.id) }}" class="btn btn-primary btn-sm btn-block" style="text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            <i class="fas fa-comments"></i> Start Chat Solver
+                        </a>
+                        <a href="{{ url_for('student.quiz_gen', subject=sub.name) }}" class="btn btn-secondary btn-sm btn-block" style="text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: #F8FAFC;">
+                            <i class="fas fa-lightbulb"></i> Practice Quiz
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p style="grid-column: 1/-1; color: #94A3B8; text-align: center; padding: 3rem 0;">No subjects loaded. Database seeding might have failed.</p>
+        {% endif %}
+    </div>
+
+    <!-- Right Panel: Custom Subject Form -->
+    <div class="custom-subject-panel">
+        <div class="card glass-card" style="padding: 1.5rem; border-radius: 16px;">
+            <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; margin: 0 0 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-plus-circle" style="color: #06B6D4;"></i> Custom Subject
+            </h3>
+            <p style="color: #94A3B8; font-size: 0.85rem; line-height: 1.4; margin: 0 0 1.25rem 0;">Struggling with a niche course? Create a custom learning subject space immediately.</p>
+            
+            <form action="{{ url_for('student.subjects') }}" method="POST">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="subName" class="form-label" style="font-size: 0.85rem;">Subject Name</label>
+                    <input type="text" name="name" id="subName" class="form-control" placeholder="e.g. Compiler Design" required>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="subCode" class="form-label" style="font-size: 0.85rem;">Subject Code</label>
+                    <input type="text" name="code" id="subCode" class="form-control" placeholder="e.g. CD401" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block" style="width: 100%;">
+                    Create Subject <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}{{ module.name }} - Learnix{% endblock %}
+{% block content %}
+<div class="page-header animate-fade-in">
+    <a href="{{ url_for('student.placement_hub') }}" class="back-link"><i class="fas fa-arrow-left"></i> Back to Placement Hub</a>
+    <h1><i class="fas {{ module.icon }}"></i> {{ module.name }}</h1>
+    <p>Select a topic and difficulty to start your practice quiz.</p>
+</div>
+
+<div class="card glass-card" style="padding: 2rem; margin-bottom: 2rem;">
+    <form id="placementQuizForm">
+        <input type="hidden" id="moduleKey" value="{{ module_key }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Topic</label>
+                <select id="topicSelect" class="form-control">
+                    {% for t in module.topics %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Difficulty</label>
+                <select id="difficultySelect" class="form-control">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <div class="form-group" style="align-self: flex-end;">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-play"></i> Start Quiz</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="quizArea" class="card glass-card" style="padding: 2rem; display: none;">
+    <div id="quizQuestions"></div>
+    <button id="submitQuizBtn" class="btn btn-primary" style="margin-top: 1.5rem; display: none;"><i class="fas fa-check"></i> Submit Answers</button>
+    <div id="quizResults" style="display: none; margin-top: 1.5rem;"></div>
+</div>
+
+{% if progress %}
+<div class="card glass-card" style="padding: 1.5rem; margin-top: 2rem;">
+    <h3>Recent Performance</h3>
+    <div class="activity-timeline">
+        {% for p in progress %}
+        <div class="activity-entry">
+            <div class="timeline-dot"></div>
+            <div class="activity-body">
+                <span>{{ p.topic }} &mdash; {{ p.difficulty|title }}</span>
+                <span>{{ p.score }}/{{ p.total_questions }} ({{ (p.score / p.total_questions * 100)|int if p.total_questions > 0 else 0 }}%)</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">{{ p.last_practiced.strftime('%b %d, %Y') }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentQuestions = [];
+document.getElementById('placementQuizForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const module = document.getElementById('moduleKey').value;
+    const topic = document.getElementById('topicSelect').value;
+    const difficulty = document.getElementById('difficultySelect').value;
+    const res = await fetch('/api/placement/quiz/generate', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({module, topic, difficulty, num_questions: 5})
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+        currentQuestions = data.questions;
+        renderQuiz(currentQuestions);
+        document.getElementById('quizArea').style.display = 'block';
+        document.getElementById('submitQuizBtn').style.display = 'inline-flex';
+        document.getElementById('quizResults').style.display = 'none';
+    }
+});
+
+function renderQuiz(questions) {
+    const container = document.getElementById('quizQuestions');
+    container.innerHTML = questions.map((q, i) => `
+        <div class="quiz-question-card" style="margin-bottom: 1.5rem; padding: 1rem; border: 1px solid var(--card-border); border-radius: 12px;">
+            <p><strong>Q${i+1}.</strong> ${q.question_text}</p>
+            <div class="quiz-options" style="display: grid; gap: 0.5rem; margin-top: 0.75rem;">
+                ${['A','B','C','D'].map(opt => q['option_'+opt.toLowerCase()] ? `
+                    <label class="quiz-option-label"><input type="radio" name="q${i}" value="${opt}"> ${opt}. ${q['option_'+opt.toLowerCase()]}</label>
+                ` : '').join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+document.getElementById('submitQuizBtn').addEventListener('click', async () => {
+    const answers = {};
+    currentQuestions.forEach((_, i) => {
+        const sel = document.querySelector(`input[name="q${i}"]:checked`);
+        answers[i] = sel ? sel.value : '';
+    });
+    const res = await fetch('/api/placement/quiz/submit', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            module: document.getElementById('moduleKey').value,
+            topic: document.getElementById('topicSelect').value,
+            difficulty: document.getElementById('difficultySelect').value,
+            questions: currentQuestions, answers
+        })
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+        document.getElementById('quizResults').style.display = 'block';
+        document.getElementById('quizResults').innerHTML = `
+            <div class="result-banner" style="padding: 1.5rem; background: rgba(99,102,241,0.1); border-radius: 12px;">
+                <h3>Score: ${data.score}/${data.total} (${data.percentage}%)</h3>
+                ${data.weak_topics.length ? '<p>Review: ' + data.weak_topics.join(', ') + '</p>' : '<p>Great job! Keep practicing.</p>'}
+            </div>`;
+        document.getElementById('submitQuizBtn').style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

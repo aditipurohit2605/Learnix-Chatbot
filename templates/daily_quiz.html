@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Quiz Challenge - Learnix{% endblock %}
+
+{% block styles %}
+<style>
+    .streak-board {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .streak-metric-card {
+        text-align: center;
+        padding: 2rem;
+        border-radius: 16px;
+    }
+    .fire-streak-animation {
+        position: relative;
+        font-size: 4.5rem;
+        color: #EF4444;
+        animation: float 3s ease-in-out infinite;
+        text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        margin-bottom: 1rem;
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+    .option-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.25s ease;
+    }
+    .option-card:hover {
+        background: rgba(79, 70, 229, 0.08);
+        border-color: rgba(79, 70, 229, 0.3);
+    }
+    .option-card.selected {
+        background: rgba(79, 70, 229, 0.15);
+        border-color: #4F46E5;
+        box-shadow: 0 0 15px rgba(79, 70, 229, 0.25);
+    }
+    .option-radio {
+        accent-color: #4F46E5;
+        width: 18px;
+        height: 18px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-title-row" style="margin-bottom: 2rem;">
+    <div>
+        <h1 style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; margin: 0;">Daily Challenge</h1>
+        <p style="color: #94A3B8; margin: 0.25rem 0 0 0;">Practice daily to build streaks, earn bonus multipliers, and lock down badges!</p>
+    </div>
+</div>
+
+<div class="daily-challenge-layout" style="display: grid; grid-template-columns: 1.2fr 2fr; gap: 2rem; align-items: start;">
+    
+    <!-- Left Panel: Streak Tracker -->
+    <div class="streak-tracker-col" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        
+        <div class="card glass-card streak-metric-card" style="display: flex; flex-direction: column; align-items: center;">
+            <div class="fire-streak-animation">
+                <i class="fas fa-fire"></i>
+            </div>
+            <h2 style="font-family: 'Outfit', sans-serif; font-size: 2.25rem; font-weight: 800; margin: 0;">{{ streak }} Days</h2>
+            <p style="color: #94A3B8; font-size: 0.9rem; margin: 0.25rem 0 1rem 0;">Current learning streak</p>
+            <span class="badge badge-info" style="font-size: 0.8rem; background: rgba(79,70,229,0.1); color:#a5b4fc; font-weight:700;">Max Streak: {{ max_streak }} Days</span>
+        </div>
+        
+        <div class="card glass-card" style="padding: 1.5rem; border-radius: 16px;">
+            <h3 style="font-size: 1.1rem; font-weight: 700; margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-info-circle" style="color: #06B6D4;"></i> Streak Multipliers
+            </h3>
+            <p style="color: #94A3B8; font-size: 0.85rem; line-height: 1.5; margin: 0 0 1rem 0;">Completing your daily challenge awards standard points. Build streaks of 5+ days to earn extra badge tiers!</p>
+            <ul style="color: #E2E8F0; font-size: 0.85rem; margin: 0; padding-left: 1.25rem; line-height: 1.6;">
+                <li>Streak of 5 Days &bull; Streak Hero Badge</li>
+                <li>Streak of 10 Days &bull; 1.5&times; Points Multiplier</li>
+                <li>Streak of 30 Days &bull; Streak Master Title</li>
+            </ul>
+        </div>
+        
+    </div>
+
+    <!-- Right Panel: Challenge solver -->
+    <div class="challenge-solver-col">
+        
+        {% if completed_result %}
+            <!-- Done for today card -->
+            <div class="card glass-card" style="padding: 3rem 2rem; text-align: center; border-radius: 20px;">
+                <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(16,185,129,0.1); color: #10B981; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
+                    <i class="fas fa-check-double"></i>
+                </div>
+                
+                <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.75rem; font-weight: 800; margin: 0 0 0.5rem 0;">Challenge Completed!</h2>
+                <p style="color: #94A3B8; max-width: 400px; margin: 0 auto 1.5rem auto;">You completed today's challenge. Come back tomorrow to continue your streak.</p>
+                
+                <div style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;">
+                    <span class="badge" style="background: rgba(16,185,129,0.1); color: #10B981; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; border-radius: 8px;">
+                        Score: {{ completed_result.score }}/{{ completed_result.total_questions }}
+                    </span>
+                    <span class="badge" style="background: rgba(79,70,229,0.1); color: #a5b4fc; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; border-radius: 8px;">
+                        Earned: +{{ completed_result.points_earned }} pts
+                    </span>
+                </div>
+                
+                <a href="{{ url_for('student.quiz_view', quiz_id=quiz.id) }}" class="btn btn-secondary">Review Graded Solutions</a>
+            </div>
+        {% else %}
+            <!-- Solver loader card -->
+            <div class="card glass-card" style="padding: 2.5rem; border-radius: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                    <span class="badge badge-info" style="font-size: 0.75rem; font-weight: 700;">DAILY CHALLENGE</span>
+                    <span style="font-size: 0.85rem; color: #94A3B8; font-weight: 600;">{{ quiz.questions | length }} Questions &bull; Medium</span>
+                </div>
+                
+                <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 700; margin: 0 0 1rem 0;">{{ quiz.title }}</h2>
+                <p style="color: #94A3B8; font-size: 0.9rem; line-height: 1.5; margin: 0 0 2rem 0;">Master questions in core subjects. Answers cannot be changed after submission. Take your time!</p>
+                
+                <a href="{{ url_for('student.quiz_view', quiz_id=quiz.id) }}" class="btn btn-primary btn-block" style="text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem; font-size: 1.1rem; border-radius: 12px;">
+                    <i class="fas fa-play"></i> Start Daily Challenge
+                </a>
+            </div>
+        {% endif %}
+        
+    </div>
+
+</div>
+{% endblock %}

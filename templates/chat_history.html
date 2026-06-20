@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Chat History - Learnix{% endblock %}
+
+{% block content %}
+<div class="page-title-row" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; margin: 0;">Chat History</h1>
+        <p style="color: #94A3B8; margin: 0.25rem 0 0 0;">View, search, resume, or delete your past AI learning conversations.</p>
+    </div>
+    
+    <!-- Search inside Chat History -->
+    <div class="history-search-filter" style="width: 100%; max-width: 320px;">
+        <form action="{{ url_for('student.chat_history') }}" method="GET" style="position: relative;">
+            <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #64748B;"></i>
+            <input type="text" name="q" value="{{ search_query }}" placeholder="Search chat title..." class="form-control" style="padding-left: 2.5rem; border-radius: 50px; background: #1E293B; border-color: rgba(255,255,255,0.05); color: #fff;">
+        </form>
+    </div>
+</div>
+
+<div class="history-list-wrapper" style="display: flex; flex-direction: column; gap: 1rem;">
+    {% if conversations %}
+        {% for conv in conversations %}
+            <div class="card glass-card history-row-card" id="conv-card-{{ conv.id }}" style="padding: 1.25rem 1.75rem; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; transition: all 0.3s ease;">
+                
+                <div class="history-info-col" style="display: flex; align-items: center; gap: 1.25rem; flex-grow: 1; min-width: 0;">
+                    <div class="history-sub-badge" style="width: 42px; height: 42px; border-radius: 10px; background: rgba(124, 58, 237, 0.1); color: #7C3AED; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        {{ conv.subject.code if conv.subject else 'AI' }}
+                    </div>
+                    
+                    <div style="min-width: 0;">
+                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                            <a href="{{ url_for('student.chatbot', conv_id=conv.id) }}" style="color: #F8FAFC; text-decoration: none; transition: color 0.2s;">
+                                {{ conv.title }}
+                            </a>
+                        </h3>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.25rem; font-size: 0.75rem; color: #94A3B8;">
+                            <span><i class="fas fa-calendar-alt"></i> {{ conv.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                            <span>&bull;</span>
+                            <span><i class="fas fa-comment-dots"></i> {{ conv.messages | length }} Messages</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="history-actions-col" style="display: flex; gap: 0.75rem; flex-shrink: 0;">
+                    <a href="{{ url_for('student.chatbot', conv_id=conv.id) }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: #F8FAFC;">
+                        <i class="fas fa-external-link-alt"></i> Continue Chat
+                    </a>
+                    <button onclick="triggerDeleteConversation({{ conv.id }})" class="btn btn-sm btn-danger" style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border-radius: 8px;" title="Delete Chat">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+                
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="card glass-card" style="padding: 4rem 2rem; text-align: center; border-radius: 16px;">
+            <i class="fas fa-history" style="font-size: 3rem; color: #475569; margin-bottom: 1rem;"></i>
+            <h2>No Conversations Found</h2>
+            {% if search_query %}
+                <p style="color: #94A3B8;">No records matched your search term: <strong>"{{ search_query }}"</strong></p>
+                <a href="{{ url_for('student.chat_history') }}" class="btn btn-secondary" style="margin-top: 1rem;">Clear Search Filter</a>
+            {% else %}
+                <p style="color: #94A3B8;">You haven't chatted with any AI subject tutors yet.</p>
+                <a href="{{ url_for('student.subjects') }}" class="btn btn-primary" style="margin-top: 1rem;">Start a Chat Session</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function triggerDeleteConversation(convId) {
+        if (!confirm("Are you sure you want to permanently delete this chat log from your history?")) {
+            return;
+        }
+        
+        fetch(`/api/chat/delete/${convId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Remove card from UI
+                const card = document.getElementById(`conv-card-${convId}`);
+                if (card) {
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.9)';
+                    setTimeout(() => card.remove(), 300);
+                }
+                
+                // Show floating success toast
+                showGlobalToast('success', 'Conversation deleted successfully.');
+            } else {
+                showGlobalToast('danger', data.message || 'Failed to delete conversation.');
+            }
+        })
+        .catch(err => {
+            console.error('Delete chat failed:', err);
+            showGlobalToast('danger', 'Error connecting to delete API endpoint.');
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - Learnix{% endblock %}
+
+{% block body_class %}class="auth-page"{% endblock %}
+{% block content %}
+<div class="auth-container">
+    
+    <!-- Learnix Branding -->
+    <div class="auth-logo-header">
+        <a href="/" class="auth-logo">
+            <i class="fas fa-brain"></i> Learnix
+        </a>
+        <p class="auth-tagline">"Learn Smarter with AI"</p>
+    </div>
+
+    <!-- Registration Card -->
+    <div class="card glass-card auth-card">
+        <div class="auth-header">
+            <h2>Create Account</h2>
+            <p>Register as a student or admin to start utilizing AI tools.</p>
+        </div>
+        
+        <form action="{{ url_for('auth.register') }}" method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="regUsername" class="form-label">Username</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" name="username" id="regUsername" class="form-control" placeholder="Choose a username" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="regEmail" class="form-label">Email Address</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" name="email" id="regEmail" class="form-control" placeholder="name@domain.com" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="regRole" class="form-label">User Role</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-user-tag input-icon"></i>
+                    <select name="role" id="regRole" class="form-control select">
+                        <option value="student">Student (Learn & Quiz)</option>
+                        <option value="admin">Administrator (Manage System)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="regPassword" class="form-label">Password</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" name="password" id="regPassword" class="form-control" placeholder="••••••••" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="regConfirmPassword" class="form-label">Confirm Password</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-shield-alt input-icon"></i>
+                    <input type="password" name="confirm_password" id="regConfirmPassword" class="form-control" placeholder="••••••••" required>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">
+                Create Account <i class="fas fa-user-plus icon-end"></i>
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>
+                Already have an account? 
+                <a href="{{ url_for('auth.login') }}" class="auth-link">Sign In</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

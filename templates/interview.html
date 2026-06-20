@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Interview Preparation - Learnix{% endblock %}
+{% block content %}
+<div class="page-header animate-fade-in">
+    <h1><i class="fas fa-microphone"></i> Interview Preparation</h1>
+    <p>Prepare for technical and HR interviews with AI mock interviews and feedback.</p>
+</div>
+
+<div class="stats-grid" style="margin-bottom: 2rem;">
+    <div class="stat-card glass-panel">
+        <div class="stat-icon-wrapper" style="background: rgba(139,92,246,0.15); color: #8B5CF6;"><i class="fas fa-laptop-code"></i></div>
+        <div class="stat-details"><h3 class="stat-value">{{ tech_topics|length }}</h3><p class="stat-label">Technical Topics</p></div>
+    </div>
+    <div class="stat-card glass-panel">
+        <div class="stat-icon-wrapper" style="background: rgba(6,182,212,0.15); color: #06B6D4;"><i class="fas fa-user-tie"></i></div>
+        <div class="stat-details"><h3 class="stat-value">{{ hr_topics|length }}</h3><p class="stat-label">HR Topics</p></div>
+    </div>
+    <div class="stat-card glass-panel">
+        <div class="stat-icon-wrapper streak-accent"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-details"><h3 class="stat-value">{{ avg_confidence }}%</h3><p class="stat-label">Avg Confidence</p></div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+    <div class="card glass-card" style="padding: 1.5rem;">
+        <h3><i class="fas fa-laptop-code"></i> Technical Interview</h3>
+        <p style="color: var(--text-muted); margin: 0.75rem 0;">DBMS, OOP, OS, CN, SQL, AI/ML, Web Development</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+            {% for t in tech_topics %}<span class="badge-info">{{ t }}</span>{% endfor %}
+        </div>
+        <a href="{{ url_for('student.interview_mock', type='technical') }}" class="btn btn-primary"><i class="fas fa-play"></i> Start Mock Interview</a>
+    </div>
+    <div class="card glass-card" style="padding: 1.5rem;">
+        <h3><i class="fas fa-user-tie"></i> HR Interview</h3>
+        <p style="color: var(--text-muted); margin: 0.75rem 0;">Behavioral questions, STAR method, confidence building</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+            {% for t in hr_topics %}<span class="badge-info">{{ t }}</span>{% endfor %}
+        </div>
+        <a href="{{ url_for('student.interview_mock', type='hr') }}" class="btn btn-primary"><i class="fas fa-play"></i> Start Mock Interview</a>
+    </div>
+</div>
+
+{% if history %}
+<div class="card glass-card" style="padding: 1.5rem;">
+    <h3>Interview History</h3>
+    <div class="activity-timeline">
+        {% for h in history %}
+        <div class="activity-entry">
+            <div class="timeline-dot"></div>
+            <div class="activity-body">
+                <span>{{ h.interview_type|title }} &mdash; {{ h.topic }}</span>
+                <span>Confidence: {{ h.confidence_score|int }}%</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">{{ h.created_at.strftime('%b %d, %Y') }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

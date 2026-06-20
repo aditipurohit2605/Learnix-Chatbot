@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - Learnix{% endblock %}
+
+{% block content %}
+<div class="page-title-row" style="margin-bottom: 2rem;">
+    <div>
+        <h1 style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; margin: 0;">Notifications</h1>
+        <p style="color: #94A3B8; margin: 0.25rem 0 0 0;">Review your system alerts, learning milestones, and quiz participation details.</p>
+    </div>
+</div>
+
+<div class="notifications-container" style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 1rem;">
+    
+    {% if notifications %}
+        {% for notif in notifications %}
+            <div class="card glass-card notification-item-row {% if not notif.is_read %}notif-unread{% endif %}" style="padding: 1.25rem 1.75rem; border-radius: 14px; display: flex; gap: 1.25rem; align-items: center; transition: all 0.3s ease; position: relative;">
+                
+                <!-- Conditionally render unread marker dot -->
+                {% if not notif.is_read %}
+                    <div class="unread-marker-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #06B6D4; position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%);"></div>
+                {% endif %}
+                
+                <!-- Notification type icons -->
+                <div class="notif-icon-wrapper" style="width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; 
+                    {% if notif.type == 'achievement' %}background: rgba(234,179,8,0.1); color:#EAB308;
+                    {% elif notif.type == 'streak' %}background: rgba(239,68,68,0.1); color:#EF4444;
+                    {% elif notif.type == 'quiz' %}background: rgba(79,70,229,0.1); color:#4F46E5;
+                    {% else %}background: rgba(6,182,212,0.1); color:#06B6D4;{% endif %} font-size: 1.15rem;">
+                    
+                    {% if notif.type == 'achievement' %}
+                        <i class="fas fa-trophy"></i>
+                    {% elif notif.type == 'streak' %}
+                        <i class="fas fa-fire"></i>
+                    {% elif notif.type == 'quiz' %}
+                        <i class="fas fa-lightbulb"></i>
+                    {% else %}
+                        <i class="fas fa-bell"></i>
+                    {% endif %}
+                </div>
+                
+                <div class="notif-content-wrapper" style="flex-grow: 1;">
+                    <h3 style="margin: 0; font-size: 1rem; font-weight: 600; color: #F8FAFC;">{{ notif.title }}</h3>
+                    <p style="margin: 0.2rem 0 0 0; font-size: 0.85rem; color: #94A3B8; line-height: 1.4;">{{ notif.message }}</p>
+                    <span style="font-size: 0.7rem; color: #64748B; display: block; margin-top: 0.35rem;"><i class="fas fa-clock"></i> {{ notif.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="card glass-card" style="padding: 5rem 2rem; text-align: center; border-radius: 16px;">
+            <i class="fas fa-bell-slash" style="font-size: 3rem; color: #475569; margin-bottom: 1rem;"></i>
+            <h2>Inbox is Empty</h2>
+            <p style="color: #94A3B8; max-width: 340px; margin: 0 auto;">You have no notifications yet. Try earning badges on the leaderboard, or maintaining a daily study streak!</p>
+            <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary" style="margin-top: 1.5rem;">Return Dashboard</a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

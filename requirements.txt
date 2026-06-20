@@ -1,0 +1,14 @@
+Flask==3.0.2
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Werkzeug==3.0.1
+PyPDF2==3.0.1
+docx2txt==0.8
+google-generativeai
+python-dotenv>=1.0.0
+requests==2.31.0
+cryptography==42.0.2
+httpx==0.24.1
+fpdf2==2.8.2
+
+# Recommended Python: 3.8+

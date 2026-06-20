@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}{{ quiz.title }} - Learnix{% endblock %}
+
+{% block styles %}
+<style>
+    .option-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.25s ease;
+    }
+    .option-card:hover {
+        background: rgba(79, 70, 229, 0.08);
+        border-color: rgba(79, 70, 229, 0.3);
+    }
+    .option-card.selected {
+        background: rgba(79, 70, 229, 0.15);
+        border-color: #4F46E5;
+        box-shadow: 0 0 15px rgba(79, 70, 229, 0.25);
+    }
+    .option-radio {
+        accent-color: #4F46E5;
+        width: 18px;
+        height: 18px;
+    }
+    .explanation-box {
+        background: rgba(6, 182, 212, 0.05);
+        border-left: 4px solid #06B6D4;
+        padding: 1.25rem;
+        border-radius: 0 12px 12px 0;
+        margin-top: 1.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="quiz-container" data-quiz-id="{{ quiz.id }}" data-difficulty="{{ quiz.difficulty }}" data-time-limit="{{ quiz.questions | length * 60 }}">
+    
+    <!-- Header: Stats and controls -->
+    <div class="page-title-row" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="font-family: 'Outfit', sans-serif; font-size: 1.85rem; font-weight: 800; margin: 0;">{{ quiz.title }}</h1>
+            <p style="color: #94A3B8; margin: 0.25rem 0 0 0;">
+                Subject: <strong>{{ quiz.subject.name }}</strong> &bull; 
+                Difficulty: <span class="badge badge-info">{{ quiz.difficulty | capitalize }}</span>
+            </p>
+        </div>
+        
+        <!-- Timer (if active solving) -->
+        {% if not completed_result %}
+            <div class="quiz-timer-box glass-panel" style="padding: 0.75rem 1.5rem; border-radius: 50px; font-family: 'Outfit', sans-serif; font-weight: 700; color: #EF4444; border-color: rgba(239,68,68,0.2); display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem;">
+                <i class="fas fa-clock animate-pulse"></i>
+                <span id="quizTimeRemaining">00:00</span>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if completed_result %}
+        <!-- ========================================== -->
+        <!-- POST-QUIZ RESULTS VIEW                     -->
+        <!-- ========================================== -->
+        <div class="card glass-card" style="border-radius: 20px; padding: 2.5rem; text-align: center; margin-bottom: 2rem;">
+            
+            {% set score_percent = (completed_result.score / completed_result.total_questions * 100) | int %}
+            
+            <div class="score-radial-progress" style="width: 140px; height: 140px; border-radius: 50%; margin: 0 auto 1.5rem auto; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); border: 8px solid {% if score_percent >= 70 %}#10B981{% else %}#EF4444{% endif %}; box-shadow: 0 0 25px {% if score_percent >= 70 %}rgba(16,185,129,0.2){% else %}rgba(239,68,68,0.2){% endif %};">
+                <span style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; color: #fff;">{{ score_percent }}%</span>
+                <span style="font-size: 0.8rem; color: #94A3B8; margin-top: -0.2rem;">Score</span>
+            </div>
+            
+            <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.75rem; font-weight: 800; margin: 0 0 0.5rem 0;">Quiz Graded Successfully!</h2>
+            <p style="color: #94A3B8; max-width: 400px; margin: 0 auto 1.5rem auto;">You correctly answered <strong>{{ completed_result.score }}</strong> out of <strong>{{ completed_result.total_questions }}</strong> questions.</p>
+            
+            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <div class="glass-panel" style="padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 600; color: #10B981;">
+                    <i class="fas fa-plus-circle"></i> +{{ completed_result.points_earned }} Points Awarded
+                </div>
+                <div class="glass-panel" style="padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 600; color: #EAB308;">
+                    <i class="fas fa-fire"></i> Streak Maintained!
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Detailed answers review -->
+        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; margin: 2rem 0 1rem 0;">Review Explanations</h2>
+        <div class="quiz-review-list" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            {% for q in quiz.questions %}
+                <div class="card glass-card" style="padding: 2rem; border-radius: 16px;">
+                    <h3 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 1.25rem 0; line-height: 1.5;">
+                        <span style="color: #4F46E5; margin-right: 0.5rem;">Q{{ loop.index }}.</span> {{ q.question_text }}
+                    </h3>
+                    
+                    {% if q.question_type == 'mcq' %}
+                        <div class="review-options">
+                            <div class="option-card {% if q.correct_answer == 'A' %}selected{% endif %}" style="pointer-events: none;">
+                                <span class="option-letter" style="font-weight: 700;">A.</span> <span>{{ q.option_a }}</span>
+                                {% if q.correct_answer == 'A' %}<i class="fas fa-check-circle" style="color:#10B981; margin-left:auto;"></i>{% endif %}
+                            </div>
+                            <div class="option-card {% if q.correct_answer == 'B' %}selected{% endif %}" style="pointer-events: none;">
+                                <span class="option-letter" style="font-weight: 700;">B.</span> <span>{{ q.option_b }}</span>
+                                {% if q.correct_answer == 'B' %}<i class="fas fa-check-circle" style="color:#10B981; margin-left:auto;"></i>{% endif %}
+                            </div>
+                            <div class="option-card {% if q.correct_answer == 'C' %}selected{% endif %}" style="pointer-events: none;">
+                                <span class="option-letter" style="font-weight: 700;">C.</span> <span>{{ q.option_c }}</span>
+                                {% if q.correct_answer == 'C' %}<i class="fas fa-check-circle" style="color:#10B981; margin-left:auto;"></i>{% endif %}
+                            </div>
+                            <div class="option-card {% if q.correct_answer == 'D' %}selected{% endif %}" style="pointer-events: none;">
+                                <span class="option-letter" style="font-weight: 700;">D.</span> <span>{{ q.option_d }}</span>
+                                {% if q.correct_answer == 'D' %}<i class="fas fa-check-circle" style="color:#10B981; margin-left:auto;"></i>{% endif %}
+                            </div>
+                        </div>
+                    {% elif q.question_type == 'true_false' %}
+                        <div class="review-options">
+                            <div class="option-card {% if q.correct_answer == 'True' %}selected{% endif %}" style="pointer-events: none;">
+                                <span style="font-weight: 700;">True</span>
+                                {% if q.correct_answer == 'True' %}<i class="fas fa-check-circle" style="color:#10B981; margin-left:auto;"></i>{% endif %}
+                            </div>
+                            <div class="option-card {% if q.correct_answer == 'False' %}selected{% endif %}" style="pointer-events: none;">
+                                <span style="font-weight: 700;">False</span>
+                                {% if q.correct_answer == 'False' %}<i class="fas fa-check-circle" style="color:#10B981; margin-left:auto;"></i>{% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Fill in result -->
+                        <div class="glass-panel" style="padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+                            <span style="color: #94A3B8; font-size: 0.85rem; display: block;">Correct Answer:</span>
+                            <strong style="color:#10B981; font-size: 1.1rem;">{{ q.correct_answer }}</strong>
+                        </div>
+                    {% endif %}
+                    
+                    {% if q.explanation %}
+                        <div class="explanation-box">
+                            <span style="font-weight: 700; color: #06B6D4; display: block; margin-bottom: 0.25rem;"><i class="fas fa-book-open"></i> Educational Explanation:</span>
+                            <p style="margin: 0; color: #E2E8F0; font-size: 0.9rem; line-height: 1.5;">{{ q.explanation }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem;">
+            <a href="{{ url_for('student.quiz_gen') }}" class="btn btn-primary">Generate Another Quiz</a>
+            <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary" style="background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); color: #fff;">Return Dashboard</a>
+        </div>
+
+    {% else %}
+        <!-- ========================================== -->
+        <!-- ACTIVE QUIZ SOLVING VIEW                   -->
+        <!-- ========================================== -->
+        
+        <!-- Dynamic loading submit result panel -->
+        <div class="card glass-card" id="quizSubmittingLoader" style="display: none; text-align: center; padding: 4rem 2rem; border-radius: 20px;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 4rem; color: #4F46E5; margin-bottom: 2rem;"></i>
+            <h2 style="font-family: 'Outfit', sans-serif;">Grading Your Responses...</h2>
+            <p style="color:#94A3B8;">Evaluating choices and applying streaks arithmetic in database...</p>
+        </div>
+
+        <div id="activeQuizPlayPanel">
+            <!-- Questions Paginated Wrapper -->
+            {% for q in quiz.questions %}
+                <div class="quiz-question-card" id="quizQuestionCard-{{ loop.index0 }}" style="{% if not loop.first %}display: none;{% endif %}">
+                    <div class="card glass-card" style="padding: 2.5rem; border-radius: 20px; position: relative;">
+                        
+                        <div class="question-meta-row" style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; font-size: 0.9rem; color: #94A3B8; font-weight: 600;">
+                            <span>Question {{ loop.index }} of {{ quiz.questions | length }}</span>
+                            <span class="badge badge-info">{{ q.question_type | upper | replace('_', ' ') }}</span>
+                        </div>
+                        
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 700; margin: 0 0 2rem 0; line-height: 1.5;">
+                            {{ q.question_text }}
+                        </h2>
+                        
+                        <!-- Inputs based on question type -->
+                        {% if q.question_type == 'mcq' %}
+                            <div class="quiz-options-list">
+                                <label class="option-card" onclick="selectOption({{ q.id }}, 'A', this)">
+                                    <input type="radio" name="q-{{ q.id }}" value="A" class="option-radio" style="display: none;">
+                                    <span class="option-letter" style="font-weight: 700; color: #4F46E5;">A.</span>
+                                    <span>{{ q.option_a }}</span>
+                                </label>
+                                <label class="option-card" onclick="selectOption({{ q.id }}, 'B', this)">
+                                    <input type="radio" name="q-{{ q.id }}" value="B" class="option-radio" style="display: none;">
+                                    <span class="option-letter" style="font-weight: 700; color: #4F46E5;">B.</span>
+                                    <span>{{ q.option_b }}</span>
+                                </label>
+                                <label class="option-card" onclick="selectOption({{ q.id }}, 'C', this)">
+                                    <input type="radio" name="q-{{ q.id }}" value="C" class="option-radio" style="display: none;">
+                                    <span class="option-letter" style="font-weight: 700; color: #4F46E5;">C.</span>
+                                    <span>{{ q.option_c }}</span>
+                                </label>
+                                <label class="option-card" onclick="selectOption({{ q.id }}, 'D', this)">
+                                    <input type="radio" name="q-{{ q.id }}" value="D" class="option-radio" style="display: none;">
+                                    <span class="option-letter" style="font-weight: 700; color: #4F46E5;">D.</span>
+                                    <span>{{ q.option_d }}</span>
+                                </label>
+                            </div>
+                        {% elif q.question_type == 'true_false' %}
+                            <div class="quiz-options-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <label class="option-card" onclick="selectOption({{ q.id }}, 'True', this)">
+                                    <input type="radio" name="q-{{ q.id }}" value="True" class="option-radio" style="display: none;">
+                                    <span style="font-weight: 700;">True</span>
+                                </label>
+                                <label class="option-card" onclick="selectOption({{ q.id }}, 'False', this)">
+                                    <input type="radio" name="q-{{ q.id }}" value="False" class="option-radio" style="display: none;">
+                                    <span style="font-weight: 700;">False</span>
+                                </label>
+                            </div>
+                        {% else %}
+                            <!-- Fill In the blanks -->
+                            <div class="quiz-fill-container" style="margin-top: 1.5rem;">
+                                <input type="text" oninput="saveFillAnswer({{ q.id }}, this.value)" class="form-control fill-in-box" placeholder="Type your answer here..." style="font-size: 1.1rem; padding: 1rem 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.02); color: #fff;">
+                            </div>
+                        {% endif %}
+                        
+                    </div>
+                </div>
+            {% endfor %}
+            
+            <!-- Bottom Controls: Paginations and submit triggers -->
+            <div class="quiz-control-actions" style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn btn-secondary" id="quizPrevBtn" onclick="prevQuestion()" disabled style="background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); color: #fff;">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                
+                <div class="quiz-page-indicator" style="display: flex; gap: 0.5rem;">
+                    {% for q in quiz.questions %}
+                        <span class="page-indicator-dot" id="pageIndicatorDot-{{ loop.index0 }}" style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.1); transition: all 0.3s;"></span>
+                    {% endfor %}
+                </div>
+                
+                <button class="btn btn-primary" id="quizNextBtn" onclick="nextQuestion()">
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+                
+                <button class="btn btn-success" id="quizSubmitBtn" onclick="triggerSubmitQuiz()" style="display: none;">
+                    Submit Answers <i class="fas fa-check"></i>
+                </button>
+            </div>
+        </div>
+
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if not completed_result %}
+<script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
+{% endif %}
+{% endblock %}

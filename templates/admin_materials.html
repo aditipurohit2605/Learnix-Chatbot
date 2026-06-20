@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Materials - Learnix{% endblock %}
+
+{% block content %}
+<div class="page-title-row" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; margin: 0;">Moderation Queue</h1>
+        <p style="color: #94A3B8; margin: 0.25rem 0 0 0;">Review uploaded study note documents, authorize content for quizzes, or delete invalid documents.</p>
+    </div>
+    
+    <!-- Filter options -->
+    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <div class="status-tab-selector" style="display: flex; background: #1E293B; border-radius: 8px; padding: 0.25rem; border: 1px solid rgba(255,255,255,0.05);">
+            <a href="{{ url_for('admin.manage_materials', status='all', q=search_query) }}" class="btn btn-sm" style="border-radius: 6px; padding: 0.4rem 1rem; color: {% if status_filter == 'all' %}#fff{% else %}#64748B{% endif %}; background: {% if status_filter == 'all' %}#4F46E5{% else %}none{% endif %}; font-weight: 600; text-decoration: none;">All</a>
+            <a href="{{ url_for('admin.manage_materials', status='pending', q=search_query) }}" class="btn btn-sm" style="border-radius: 6px; padding: 0.4rem 1rem; color: {% if status_filter == 'pending' %}#fff{% else %}#64748B{% endif %}; background: {% if status_filter == 'pending' %}#4F46E5{% else %}none{% endif %}; font-weight: 600; text-decoration: none;">Pending</a>
+            <a href="{{ url_for('admin.manage_materials', status='approved', q=search_query) }}" class="btn btn-sm" style="border-radius: 6px; padding: 0.4rem 1rem; color: {% if status_filter == 'approved' %}#fff{% else %}#64748B{% endif %}; background: {% if status_filter == 'approved' %}#4F46E5{% else %}none{% endif %}; font-weight: 600; text-decoration: none;">Approved</a>
+        </div>
+        
+        <div style="width: 100%; max-width: 240px;">
+            <form action="{{ url_for('admin.manage_materials') }}" method="GET" style="position: relative;">
+                <input type="hidden" name="status" value="{{ status_filter }}">
+                <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #64748B;"></i>
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Filter file name..." class="form-control" style="padding-left: 2.5rem; border-radius: 50px; background: #1E293B; border-color: rgba(255,255,255,0.05); color: #fff; padding-top: 0.4rem; padding-bottom: 0.4rem; font-size: 0.85rem;">
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Materials Table -->
+<div class="card glass-card" style="padding: 1.5rem; border-radius: 16px; overflow-x: auto;">
+    <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); color: #64748B; font-size: 0.85rem; font-weight: 600;">
+                <th style="padding: 0.75rem 1rem;">File Name</th>
+                <th style="padding: 0.75rem 1rem;">Uploader</th>
+                <th style="padding: 0.75rem 1rem; text-align: center;">Size</th>
+                <th style="padding: 0.75rem 1rem; text-align: center;">Status</th>
+                <th style="padding: 0.75rem 1rem; text-align: center;">Date Uploaded</th>
+                <th style="padding: 0.75rem 1rem; text-align: right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if materials %}
+                {% for mat in materials %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 0.95rem; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.01)'" onmouseout="this.style.background='none'">
+                        <!-- File Name -->
+                        <td style="padding: 1.25rem 1rem; font-weight: 600; color: #fff;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem;
+                                    {% if mat.file_type == 'pdf' %}background: rgba(239,68,68,0.1); color:#EF4444;
+                                    {% elif mat.file_type == 'docx' %}background: rgba(59,130,246,0.1); color:#3B82F6;
+                                    {% else %}background: rgba(6,182,212,0.1); color:#06B6D4;{% endif %}">
+                                    <i class="fas fa-file-{% if mat.file_type == 'pdf' %}pdf{% elif mat.file_type == 'docx' %}word{% else %}alt{% endif %}"></i>
+                                </div>
+                                <span style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 220px;" title="{{ mat.file_name }}">{{ mat.file_name }}</span>
+                            </div>
+                        </td>
+                        <!-- Uploader -->
+                        <td style="padding: 1.25rem 1rem; color: #E2E8F0;">
+                            {{ mat.uploader.username if mat.uploader else 'Deleted User' }}
+                        </td>
+                        <!-- Size -->
+                        <td style="padding: 1.25rem 1rem; text-align: center; color: #94A3B8; font-size: 0.85rem;">
+                            {{ (mat.size / 1024) | int }} KB
+                        </td>
+                        <!-- Status Badge -->
+                        <td style="padding: 1.25rem 1rem; text-align: center;">
+                            {% if mat.is_approved %}
+                                <span class="badge badge-success" style="font-size: 0.75rem; font-weight: 700;">Approved</span>
+                            {% else %}
+                                <span class="badge" style="font-size: 0.75rem; font-weight: 700; background: rgba(245,158,11,0.1); color: #F59E0B;">Pending</span>
+                            {% endif %}
+                        </td>
+                        <!-- Uploaded At -->
+                        <td style="padding: 1.25rem 1rem; text-align: center; color: #64748B; font-size: 0.85rem;">
+                            {{ mat.uploaded_at.strftime('%Y-%m-%d') }}
+                        </td>
+                        <!-- Actions -->
+                        <td style="padding: 1.25rem 1rem; text-align: right;">
+                            <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                                {% if not mat.is_approved %}
+                                    <form action="{{ url_for('admin.approve_material', material_id=mat.id) }}" method="POST" style="margin: 0;">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                <form action="{{ url_for('admin.delete_material', material_id=mat.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this study notes file? This action cannot be undone.')" style="margin: 0;">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete Material">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 3rem 0; color: #64748B;">No note materials in moderation queue.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

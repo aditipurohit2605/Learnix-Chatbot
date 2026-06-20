@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Progress Analytics - Learnix{% endblock %}
+
+{% block content %}
+<div class="page-title-row" style="margin-bottom: 2rem;">
+    <div>
+        <h1 style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; margin: 0;">Progress Dashboard</h1>
+        <p style="color: #94A3B8; margin: 0.25rem 0 0 0;">Comprehensive analytics: subject performance, placement, coding, interview, and resume readiness.</p>
+    </div>
+</div>
+
+<!-- Key analytical stats -->
+<div class="stats-grid" style="margin-bottom: 2rem;">
+    <div class="stat-card glass-panel">
+        <div class="stat-icon-wrapper quizzes-accent">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <div class="stat-details">
+            <h3 class="stat-value">{{ total_quizzes }}</h3>
+            <p class="stat-label">Total Tests Taken</p>
+        </div>
+    </div>
+    <div class="stat-card glass-panel">
+        <div class="stat-icon-wrapper points-accent">
+            <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stat-details">
+            <h3 class="stat-value">{{ avg_score }}%</h3>
+            <p class="stat-label">Average Accuracy</p>
+        </div>
+    </div>
+    <div class="stat-card glass-panel">
+        <div class="stat-icon-wrapper streak-accent">
+            <i class="fas fa-trophy"></i>
+        </div>
+        <div class="stat-details">
+            <h3 class="stat-value">{{ total_points_earned }}</h3>
+            <p class="stat-label">Lifetime Points</p>
+        </div>
+    </div>
+</div>
+
+{% if readiness %}
+<!-- Readiness Scores -->
+<div class="section-label" style="margin-bottom: 1rem;"><span>Career Readiness Analytics</span></div>
+<div class="stats-grid" style="margin-bottom: 2rem;">
+    <div class="stat-card glass-panel readiness-card">
+        <div class="stat-icon-wrapper" style="background: rgba(99,102,241,0.15); color: #6366F1;"><i class="fas fa-briefcase"></i></div>
+        <div class="stat-details"><h3 class="stat-value">{{ readiness.placement_readiness }}%</h3><p class="stat-label">Placement Readiness</p></div>
+        <div class="readiness-bar"><div class="readiness-fill" style="width: {{ readiness.placement_readiness }}%; background: #6366F1;"></div></div>
+    </div>
+    <div class="stat-card glass-panel readiness-card">
+        <div class="stat-icon-wrapper" style="background: rgba(139,92,246,0.15); color: #8B5CF6;"><i class="fas fa-code"></i></div>
+        <div class="stat-details"><h3 class="stat-value">{{ readiness.coding_readiness }}%</h3><p class="stat-label">Coding Readiness</p></div>
+        <div class="readiness-bar"><div class="readiness-fill" style="width: {{ readiness.coding_readiness }}%; background: #8B5CF6;"></div></div>
+    </div>
+    <div class="stat-card glass-panel readiness-card">
+        <div class="stat-icon-wrapper" style="background: rgba(6,182,212,0.15); color: #06B6D4;"><i class="fas fa-microphone"></i></div>
+        <div class="stat-details"><h3 class="stat-value">{{ readiness.interview_readiness }}%</h3><p class="stat-label">Interview Readiness</p></div>
+        <div class="readiness-bar"><div class="readiness-fill" style="width: {{ readiness.interview_readiness }}%; background: #06B6D4;"></div></div>
+    </div>
+    <div class="stat-card glass-panel readiness-card">
+        <div class="stat-icon-wrapper streak-accent"><i class="fas fa-file-alt"></i></div>
+        <div class="stat-details"><h3 class="stat-value">{{ readiness.resume_score }}%</h3><p class="stat-label">Resume Score</p></div>
+        <div class="readiness-bar"><div class="readiness-fill" style="width: {{ readiness.resume_score }}%; background: var(--success);"></div></div>
+    </div>
+</div>
+
+{% if subject_performance %}
+<div class="card glass-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1rem;"><i class="fas fa-book-open" style="color: var(--primary);"></i> Subject Performance</h3>
+    <div style="display: grid; gap: 0.75rem;">
+        {% for subject, score in subject_performance.items() %}
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span style="min-width: 140px; font-weight: 600;">{{ subject }}</span>
+            <div class="readiness-bar" style="flex: 1;"><div class="readiness-fill" style="width: {{ score }}%;"></div></div>
+            <span style="min-width: 45px; text-align: right; color: var(--accent);">{{ score }}%</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- Grid for Chart.js canvases -->
+<div class="analytics-charts-grid" style="display: grid; grid-template-columns: 1.8fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+    
+    <!-- Score Over Time Line Chart -->
+    <div class="card glass-card" style="padding: 1.75rem; border-radius: 16px;">
+        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 700; margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-chart-line" style="color: #4F46E5;"></i> Performance Trend
+        </h3>
+        <div style="position: relative; height: 320px; width: 100%;">
+            <canvas id="quizTrendChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Subject Distribution Doughnut Chart -->
+    <div class="card glass-card" style="padding: 1.75rem; border-radius: 16px;">
+        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 700; margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-chart-pie" style="color: #7C3AED;"></i> Subject Spread
+        </h3>
+        <div style="position: relative; height: 320px; width: 100%; display: flex; align-items: center; justify-content: center;">
+            <canvas id="subjectDistributionChart"></canvas>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script id="progressChartData" type="application/json">
+    {{ {"labels": labels, "scores": scores, "sub_labels": sub_labels, "sub_data": sub_data} | tojson }}
+</script>
+<script>
+    const progressData = JSON.parse(document.getElementById('progressChartData').textContent);
+    const quizLabels = progressData.labels;
+    const quizScores = progressData.scores;
+    const subLabels = progressData.sub_labels;
+    const subData = progressData.sub_data;
+
+    // 1. Line Chart: Quiz scores history
+    const trendCtx = document.getElementById('quizTrendChart').getContext('2d');
+    
+    if (quizLabels.length === 0) {
+        // Render simple fallback description on empty states
+        trendCtx.font = "16px sans-serif";
+        trendCtx.fillStyle = "#64748B";
+        trendCtx.textAlign = "center";
+        trendCtx.fillText("Practice some quizzes to unlock trend lines.", 200, 150);
+    } else {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: quizLabels,
+                datasets: [{
+                    label: 'Score Percentage',
+                    data: quizScores,
+                    borderColor: '#6366F1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                    borderWidth: 3,
+                    tension: 0.35,
+                    fill: true,
+                    pointBackgroundColor: '#06B6D4',
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100,
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: { color: '#64748B' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#64748B' }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Doughnut Chart: Subjects distribution
+    const subCtx = document.getElementById('subjectDistributionChart').getContext('2d');
+    
+    if (subLabels.length === 0) {
+        subCtx.font = "16px sans-serif";
+        subCtx.fillStyle = "#64748B";
+        subCtx.textAlign = "center";
+        subCtx.fillText("No subject distribution data.", 100, 150);
+    } else {
+        new Chart(subCtx, {
+            type: 'doughnut',
+            data: {
+                labels: subLabels,
+                datasets: [{
+                    data: subData,
+                    backgroundColor: [
+                        '#6366F1',
+                        '#8B5CF6',
+                        '#06B6D4',
+                        '#10B981',
+                        '#EAB308',
+                        '#EF4444',
+                        '#EC4899',
+                        '#F97316'
+                    ],
+                    borderColor: '#1E293B',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#94A3B8', padding: 15, font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

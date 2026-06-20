@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}AI Quiz Generator - Learnix{% endblock %}
+
+{% block content %}
+<div class="page-title-row" style="margin-bottom: 2rem;">
+    <div>
+        <h1 style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; margin: 0;">AI Quiz Generator</h1>
+        <p style="color: #94A3B8; margin: 0.25rem 0 0 0;">Create custom practices from standard subject syllabi or your uploaded lecture files.</p>
+    </div>
+</div>
+
+<div class="quiz-gen-container" style="max-width: 1100px; margin: 0 auto;">
+    
+    <!-- Generation Loader overlay -->
+    <div class="card glass-card quiz-generator-loader" id="quizGenLoader" style="display: none; text-align: center; padding: 4rem 2rem; border-radius: 20px;">
+        <div class="loading-spinner-wrapper" style="margin-bottom: 2rem;">
+            <i class="fas fa-cog fa-spin" style="font-size: 4rem; color: #4F46E5;"></i>
+            <i class="fas fa-sparkles" style="position: absolute; font-size: 1.5rem; color: #06B6D4; margin-left: -1rem; margin-top: -0.5rem; animation: pulse 2s infinite;"></i>
+        </div>
+        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.75rem; font-weight: 700; margin: 0 0 0.5rem 0;">Formulating Your Quiz...</h2>
+        <p style="color: #94A3B8; max-width: 400px; margin: 0 auto; line-height: 1.6;">Learnix AI is processing the material and generating test questions with detailed explanation keys. This may take a few seconds.</p>
+    </div>
+
+    <!-- Generator Setup Form -->
+    <div class="card glass-card" id="quizSetupFormCard" style="padding: 2.5rem; border-radius: 20px; position: relative;">
+        
+        <form id="quizGenForm" onsubmit="handleGenerateQuiz(event)">
+            
+            <!-- Subject Selection -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="quizSubject" class="form-label">Select Subject</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-graduation-cap input-icon"></i>
+                    <select id="quizSubject" class="form-control" style="background-color: #1E293B; color: #fff;">
+                        {% for sub in subjects %}
+                            <option value="{{ sub.id }}" {% if selected_subject_name == sub.name %}selected{% endif %}>{{ sub.name }} ({{ sub.code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Source Type: Syllabus or Material File -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label" style="display: block; margin-bottom: 0.5rem;">Question Source Material</label>
+                <div class="radio-toggle-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <label class="radio-card glass-panel" style="padding: 1rem; border-radius: 12px; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.05);">
+                        <input type="radio" name="source_type" value="subject" checked onchange="toggleSourceTypeFields('subject')" style="accent-color: #4F46E5;">
+                        <div class="radio-text">
+                            <span style="display: block; font-weight: 600; font-size: 0.95rem;">Subject Syllabus</span>
+                            <span style="font-size: 0.75rem; color: #94A3B8;">General topics</span>
+                        </div>
+                    </label>
+                    <label class="radio-card glass-panel" style="padding: 1rem; border-radius: 12px; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.05);">
+                        <input type="radio" name="source_type" value="material" onchange="toggleSourceTypeFields('material')" style="accent-color: #4F46E5;">
+                        <div class="radio-text">
+                            <span style="display: block; font-weight: 600; font-size: 0.95rem;">Uploaded File</span>
+                            <span style="font-size: 0.75rem; color: #94A3B8;">Generate from notes</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Material File Dropdown (hidden by default) -->
+            <div class="form-group" id="materialFileGroup" style="margin-bottom: 1.5rem; display: none;">
+                <label for="quizMaterial" class="form-label">Choose Note Document</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-file-invoice input-icon"></i>
+                    <select id="quizMaterial" class="form-control" style="background-color: #1E293B; color: #fff;">
+                        {% if materials %}
+                            {% for mat in materials %}
+                                <option value="{{ mat.id }}">{{ mat.file_name }} ({{ mat.file_type | upper }})</option>
+                            {% endfor %}
+                        {% else %}
+                            <option value="">No approved notes found. Upload some first!</option>
+                        {% endif %}
+                    </select>
+                </div>
+                <span style="font-size: 0.75rem; color: #94A3B8; display: block; margin-top: 0.4rem;">
+                    *(Need to upload notes? Head to the <a href="{{ url_for('student.summarizer') }}" style="color: #4F46E5; text-decoration: none; font-weight: 600;">Summarizer page</a>)
+                </span>
+            </div>
+            
+            <!-- Columns: Difficulty and Questions Count -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                
+                <div class="form-group">
+                    <label for="quizDifficulty" class="form-label">Difficulty Level</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-sliders-h input-icon"></i>
+                        <select id="quizDifficulty" class="form-control" style="background-color: #1E293B; color: #fff;">
+                            <option value="easy">Easy (10pts per correct)</option>
+                            <option value="medium" selected>Medium (15pts per correct)</option>
+                            <option value="hard">Hard (20pts per correct)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="quizNumQuestions" class="form-label">Number of Questions</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-list-ol input-icon"></i>
+                        <select id="quizNumQuestions" class="form-control" style="background-color: #1E293B; color: #fff;">
+                            <option value="3" selected>3 Questions</option>
+                            <option value="5">5 Questions</option>
+                            <option value="10">10 Questions</option>
+                        </select>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block" style="width: 100%; padding: 1rem; font-size: 1.1rem; font-weight: 700; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <i class="fas fa-magic"></i> Generate Practice Quiz
+            </button>
+            
+        </form>
+        
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleSourceTypeFields(source) {
+        const fileGroup = document.getElementById('materialFileGroup');
+        if (source === 'material') {
+            fileGroup.style.display = 'block';
+        } else {
+            fileGroup.style.display = 'none';
+        }
+    }
+    
+    function handleGenerateQuiz(e) {
+        e.preventDefault();
+        
+        const subjectId = document.getElementById('quizSubject').value;
+        const sourceType = document.querySelector('input[name="source_type"]:checked').value;
+        const materialId = document.getElementById('quizMaterial').value;
+        const difficulty = document.getElementById('quizDifficulty').value;
+        const numQuestions = document.getElementById('quizNumQuestions').value;
+        
+        if (sourceType === 'material' && !materialId) {
+            showGlobalToast('warning', 'Please upload or select a note document.');
+            return;
+        }
+        
+        // Toggle view to loader
+        document.getElementById('quizSetupFormCard').style.display = 'none';
+        document.getElementById('quizGenLoader').style.display = 'block';
+        
+        // API Payload
+        const payload = {
+            subject_id: parseInt(subjectId),
+            source_type: sourceType,
+            material_id: materialId ? parseInt(materialId) : null,
+            difficulty: difficulty,
+            num_questions: parseInt(numQuestions)
+        };
+        
+        fetch('/api/quiz/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Redirect to the newly generated quiz view
+                window.location.href = `/quiz/${data.quiz_id}`;
+            } else {
+                showGlobalToast('danger', data.message || 'Failed to generate quiz.');
+                // Recover form view
+                document.getElementById('quizGenLoader').style.display = 'none';
+                document.getElementById('quizSetupFormCard').style.display = 'block';
+            }
+        })
+        .catch(err => {
+            console.error('Quiz generation error:', err);
+            showGlobalToast('danger', 'Error connecting to Quiz generation API.');
+            // Recover form view
+            document.getElementById('quizGenLoader').style.display = 'none';
+            document.getElementById('quizSetupFormCard').style.display = 'block';
+        });
+    }
+</script>
+{% endblock %}

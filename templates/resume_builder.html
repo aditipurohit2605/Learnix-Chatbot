@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Resume Builder - Learnix{% endblock %}
+{% block content %}
+<div class="page-header animate-fade-in">
+    <h1><i class="fas fa-file-alt"></i> Resume Builder</h1>
+    <p>Create ATS-friendly resumes with AI optimization and PDF export.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <div class="card glass-card" style="padding: 1.5rem;">
+        <h3>Your Details</h3>
+        <form id="resumeForm">
+            <div class="form-group"><label>Full Name</label><input type="text" id="name" class="form-control" value="{{ latest.name if latest else current_user.username }}" required></div>
+            <div class="form-group"><label>Education</label><textarea id="education" class="form-control" rows="3" placeholder="Degree, University, Year, GPA">{{ latest.education if latest else '' }}</textarea></div>
+            <div class="form-group"><label>Skills (comma-separated)</label><textarea id="skills" class="form-control" rows="2" placeholder="Python, Java, SQL, React">{{ latest.skills if latest else '' }}</textarea></div>
+            <div class="form-group"><label>Projects</label><textarea id="projects" class="form-control" rows="3" placeholder="Project name, tech stack, impact">{{ latest.projects if latest else '' }}</textarea></div>
+            <div class="form-group"><label>Experience</label><textarea id="experience" class="form-control" rows="3" placeholder="Role, Company, Duration, Achievements">{{ latest.experience if latest else '' }}</textarea></div>
+            <div class="form-group"><label>Achievements</label><textarea id="achievements" class="form-control" rows="2" placeholder="Awards, certifications, hackathons">{{ latest.achievements if latest else '' }}</textarea></div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-magic"></i> Generate Resume</button>
+        </form>
+    </div>
+    <div class="card glass-card" style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3>Preview & Score</h3>
+            <div id="scoreBadge" class="score-circle" style="display: none;">0</div>
+        </div>
+        <div id="resumePreview" style="min-height: 300px; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px; white-space: pre-wrap; font-size: 0.9rem;">
+            {% if latest and latest.content %}{{ latest.content }}{% else %}Fill in your details and click Generate to create your ATS-friendly resume.{% endif %}
+        </div>
+        <div id="scoreChecks" style="margin-top: 1rem;"></div>
+        <a id="downloadPdfBtn" class="btn btn-secondary" style="margin-top: 1rem; display: none;" target="_blank"><i class="fas fa-download"></i> Download PDF</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('resumeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+        name: document.getElementById('name').value,
+        education: document.getElementById('education').value,
+        skills: document.getElementById('skills').value,
+        projects: document.getElementById('projects').value,
+        experience: document.getElementById('experience').value,
+        achievements: document.getElementById('achievements').value
+    };
+    document.getElementById('resumePreview').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    const res = await fetch('/api/resume/generate', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+        document.getElementById('resumePreview').textContent = data.content;
+        document.getElementById('scoreBadge').style.display = 'flex';
+        document.getElementById('scoreBadge').textContent = data.resume_score;
+        document.getElementById('scoreChecks').innerHTML = data.checks.map(c => `<span class="badge-info" style="margin: 0.2rem;">✓ ${c}</span>`).join('');
+        if (data.pdf_url) {
+            document.getElementById('downloadPdfBtn').href = data.pdf_url;
+            document.getElementById('downloadPdfBtn').style.display = 'inline-flex';
+        }
+    }
+});
+</script>
+{% endblock %}
